@@ -9,5 +9,6 @@ FROM builder AS run-tests
 RUN go test -v ./...
 
 FROM scratch
+LABEL org.opencontainers.image.source https://github.com/arljohnston/ghcr-go-test
 COPY --from=builder /app /
 CMD ["/hello-world"]
