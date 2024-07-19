@@ -3,6 +3,10 @@ name: "Docker build and push to GHCR"
 on:
   push
 
+env:
+  TF_VAR_username = "arljohnston"
+  TF_VAR_password = ${{ secrets.GHCR_PAT }}
+
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
