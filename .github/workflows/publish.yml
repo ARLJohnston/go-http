@@ -10,8 +10,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: "Build and Push"
-        run: |
-          docker login --username ARLJohnston --password ${{ secrets.GHCR_PAT }} ghcr.io
-          docker build . --tag ghcr.io/arljohnston/hello-world-ghcr:latest
-          docker push ghcr.io/arljohnston/hello-world-ghcr:latest
+      - name: "Build and publish"
+        uses: macbre/push-to-ghcr@master
+        with:
+          image_name: hello-world-ghcr
+          github_token: ${{ secrets.GHCR_PAT }}
