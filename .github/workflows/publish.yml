@@ -1,0 +1,17 @@
+name: "Docker build and push to GHCR"
+
+on:
+  push
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: "Build and Push"
+        run: |
+          docker login --username ARLJohnston --password ${{ secrets.GHCR_PAT }} ghcr.io
+          docker build . --tag ghcr.io/arljohnston/hello-world-ghcr:latest
+          docker push ghcr.io/arljohnston/hello-world-ghcr:latest

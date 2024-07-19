@@ -15,33 +15,13 @@
       nixpkgsFor = forAllSystems (system:
         import nixpkgs {
           inherit system;
-          overlays = [ (final: prev: { go = prev.go_1_22; }) ];
         });
     in {
       devShell = forAllSystems (system:
         let pkgs = nixpkgsFor.${system};
         in with pkgs;
         mkShell {
-          buildInputs = [ go_1_21 gotools go-tools gopls nixpkgs-fmt ];
+          buildInputs = [ go_1_22 gotools go-tools gopls nixpkgs-fmt yaml-language-server act ];
         });
-
-      packages = forAllSystems (system:
-        let pkgs = nixpkgsFor.${system};
-        in rec {
-          bin = pkgs.buildGoModule {
-            pname = "hello";
-            inherit version;
-            src = ./.;
-            vendorHash = null;
-          };
-
-          docker = pkgs.dockerTools.buildLayeredImage {
-            name = "hello";
-            tag = "latest";
-            config.Cmd =
-              "${bin}/bin/learnGoWithTests"; # Depends on name in go.mod
-          };
-        });
-
     };
 }
