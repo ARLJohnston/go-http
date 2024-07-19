@@ -19,6 +19,7 @@
 
 !flake.nix
 !flake.lock
+!Dockerfile
 
 !.github/workflows/*.yml
 
