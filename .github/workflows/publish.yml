@@ -4,8 +4,8 @@ on:
   push
 
 env:
-  TF_VAR_username = "arljohnston"
-  TF_VAR_password = ${{ secrets.GHCR_PAT }}
+  TF_VAR_username: "arljohnston"
+  TF_VAR_password: ${{ secrets.GHCR_PAT }}
 
 jobs:
   build_and_publish:
