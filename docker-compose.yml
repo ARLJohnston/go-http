@@ -1,0 +1,7 @@
+version: '1'
+services:
+  hello-world:
+    build: .
+
+# Compose makes it easier to add open-telemetry, however the service must expose ports for automatic instrumentation.
+# See: https://github.com/open-telemetry/opentelemetry-go-instrumentation/blob/main/docs/getting-started.md#instrument-an-application-in-docker-compose

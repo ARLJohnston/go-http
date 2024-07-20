@@ -21,6 +21,7 @@
 !flake.lock
 !Dockerfile
 !main.tf
+!docker-compose.yml
 
 !.github/workflows/*.yml
 
