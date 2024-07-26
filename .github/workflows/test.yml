@@ -1,0 +1,16 @@
+name: "Test"
+
+on:
+  ["push", "pull_request"]
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/setup-go@v5
+    - name: "Run tests"
+    - run: go test
+      -race
+      -coverprofile=coverage.txt
+      -covermode atomic
+      ./...
