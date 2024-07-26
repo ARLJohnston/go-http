@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 )
 
 const (
 	greeting = "Hello, "
 )
 
-func hello(name string) string {
-	if name == "" {
-		name = "World"
-	}
-	return greeting + name + "!"
+func hello(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, greeting+"World!")
 }
 
 func main() {
-	fmt.Println(hello("Alistair"))
+	http.HandleFunc("/hello", hello)
+
+	http.ListenAndServe(":8080", nil)
 }
