@@ -9,8 +9,8 @@ jobs:
     steps:
     - uses: actions/setup-go@v5
     - name: "Run tests"
-    - run: go test
-      -race
-      -coverprofile=coverage.txt
-      -covermode atomic
-      ./...
+      run: go test
+        -race
+        -coverprofile=coverage.txt
+        -covermode atomic
+        ./...
