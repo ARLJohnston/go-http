@@ -2,6 +2,25 @@ version: '3'
 services:
   hello-world:
     build: .
+    ports:
+    - "8080:8080"
+    volumes:
+    - app:/cmd
 
-# Compose makes it easier to add open-telemetry, however the service must expose ports for automatic instrumentation.
-# See: https://github.com/open-telemetry/opentelemetry-go-instrumentation/blob/main/docs/getting-started.md#instrument-an-application-in-docker-compose
+  go-auto:
+    image: otel/autoinstrumentation-go
+    privileged: true
+    pid: "host"
+    depends_on:
+      - hello-world
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+      - OTEL_GO_AUTO_TARGET_EXE=/hello-world
+      - OTEL_SERVICE_NAME=hello-world
+      - OTEL_PROPAGATORS=tracecontext,baggage
+    volumes:
+      # - app:/cmd
+      - /proc:/host/proc
+
+volumes:
+  app:

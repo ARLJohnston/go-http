@@ -1,8 +1,9 @@
 FROM golang AS builder
 WORKDIR /app
-COPY . .
-COPY . ../go.mod
-RUN ls
+COPY go.mod go.sum ./
+RUN go mod download
+COPY *.go ./
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o hello-world -ldflags '-extldflags "-static"' .
 
 FROM builder AS run-tests
