@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/setup-go@v5
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
     - name: "Run tests"
       run: go test
         -race
