@@ -9,13 +9,13 @@ terraform {
 
 variable "username" {
   description = "GHCR Username"
-  type = "string"
+  type = string
   sensitive = true
 }
 
 variable "password" {
   description = "GHCR password (PAT)"
-  type = "string"
+  type = string
   sensitive = true
 }
 
@@ -28,7 +28,7 @@ provider "docker" {
 }
 
 resource "docker_image" "hello" {
-  name = "ghcr.io/arljohnston/hello-world-ghcr"
+  name = "ghcr.io/arljohnston/go-http"
   keep_locally = false
 }
 
@@ -36,8 +36,8 @@ resource "docker_container" "hello" {
   image = docker_image.hello.image_id
   name = "tutorial"
 
-  # ports {
-  #   internal = 80
-  #   external = 8000
-  # }
+  ports {
+    internal = 8080
+    external = 8080
+  }
 }

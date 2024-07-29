@@ -1,3 +1,3 @@
-module github.com/ARLJohnston/ghcr-go-test
+module github.com/ARLJohnston/go-http
 
 go 1.22.5

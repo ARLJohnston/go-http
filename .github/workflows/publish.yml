@@ -17,5 +17,5 @@ jobs:
       - name: "Build and Push"
         run: |
           docker login --username ARLJohnston --password ${{ secrets.GHCR_PAT }} ghcr.io
-          docker build . --tag ghcr.io/arljohnston/hello-world-ghcr:latest
-          docker push ghcr.io/arljohnston/hello-world-ghcr:latest
+          docker build . --tag ghcr.io/arljohnston/go-http:latest
+          docker push ghcr.io/arljohnston/go-http:latest
