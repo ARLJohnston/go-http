@@ -1,4 +1,3 @@
-version: '3'
 services:
   main:
     build: .
@@ -6,6 +5,7 @@ services:
     - "8080:8080"
     volumes:
     - app:/cmd
+    - data:/data
 
   go-auto:
     image: otel/autoinstrumentation-go
@@ -24,3 +24,4 @@ services:
 
 volumes:
   app:
+  data:
