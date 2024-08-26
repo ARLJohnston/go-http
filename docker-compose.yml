@@ -19,8 +19,18 @@ services:
       - OTEL_SERVICE_NAME=main
       - OTEL_PROPAGATORS=tracecontext,baggage
     volumes:
-      # - app:/cmd
       - /proc:/host/proc
+      - data:/data
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof
+      - 4318:4318 # http
+      - 13133:13133 # health_check
+      - 55679:55679 #zpages
 
 volumes:
   app:
