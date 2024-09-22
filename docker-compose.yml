@@ -1,37 +1,54 @@
 services:
   main:
+    container_name: gohttp
     build: .
     ports:
     - "8080:8080"
     volumes:
     - app:/cmd
-    - data:/data
+    networks:
+      - monitoring
 
-  go-auto:
-    image: otel/autoinstrumentation-go
-    privileged: true
-    pid: "host"
-    depends_on:
-      - main
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-      - OTEL_GO_AUTO_TARGET_EXE=/main
-      - OTEL_SERVICE_NAME=main
-      - OTEL_PROPAGATORS=tracecontext,baggage
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
     volumes:
-      - /proc:/host/proc
-      - data:/data
-
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - 1888:1888 # pprof
-      - 4318:4318 # http
-      - 13133:13133 # health_check
-      - 55679:55679 #zpages
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
 
 volumes:
   app:
   data:
+
+networks:
+  monitoring:
+    driver: bridge

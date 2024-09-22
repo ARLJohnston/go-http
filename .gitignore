@@ -25,5 +25,7 @@
 
 !.github/workflows/*.yml
 
+!prometheus/*.yml
+
 # ...even if they are in subdirectories
 !*/
