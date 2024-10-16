@@ -1,5 +1,5 @@
 {
-  description = "Hello World";
+  description = "Flake for go-http server with various instrumentations";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
 
@@ -20,18 +20,20 @@
     in with pkgs;
     mkShell {
       buildInputs = [
-        go_1_22
+        go_1_23
         gotools
         go-tools
         gopls
         nixpkgs-fmt
         yaml-language-server
-        act
         opentofu
         terraform-ls
-        nil
-        azure-cli
+        nixd
+        delve
+        dockerfile-language-server-nodejs
       ];
+
+      CGO_ENABLED="0";
     });
   };
 }

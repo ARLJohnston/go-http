@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -53,16 +52,9 @@ var (
 )
 
 func main() {
-	err := os.Mkdir("data", 0750)
-	if err != nil && !os.IsExist(err) {
-		log.Fatal(err)
-	}
-
 	recordMetrics()
 	http.Handle("/metrics", promhttp.Handler())
 
-	// router.HandleFunc("GET /{file}", get)
-	// router.HandleFunc("PUT /{file}", put)
 	http.HandleFunc("/hello", greet)
 
 	http.ListenAndServe(":8080", nil)
