@@ -1,0 +1,22 @@
+services:
+  db:
+    container_name: mysql-database
+    image: mysql:latest
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+      - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
+    ports:
+      - "3306:3306/tcp"
+      - "33060:33060/tcp"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: userpass
+      MYSQL_DATABASE: album
+    restart: "unless-stopped"
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080

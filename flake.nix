@@ -1,9 +1,13 @@
 {
+
   description = "Flake for go-http server with various instrumentations";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    templ.url = "gitub:a-h/templ";
+  };
 
-  outputs = { self, nixpkgs }:
+  outputs = inputs@{ self, nixpkgs }:
   let
     supportedSystems =
       [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
@@ -14,6 +18,10 @@
       import nixpkgs {
         inherit system;
       });
+
+      nixpkgs.overlays = [
+        inputs.templ.overlays.default
+      ];
   in {
     devShell = forAllSystems (system:
     let pkgs = nixpkgsFor.${system};
@@ -31,8 +39,11 @@
         nixd
         delve
         dockerfile-language-server-nodejs
+        protobuf
+        protoc-gen-go
+        protoc-gen-go-grpc
+        (templ system)
       ];
-
       CGO_ENABLED="0";
     });
   };
