@@ -6,36 +6,55 @@ import (
 	"net"
 	"os"
 
-	"github.com/ARLJohnston/go-http/pb"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
 	"database/sql"
-
 	"github.com/go-sql-driver/mysql"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/ARLJohnston/go-http/pb"
 )
 
-var db *sql.DB
+var (
+	db  *sql.DB
+	cfg mysql.Config
 
-var cfg mysql.Config
+	opsStarted = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "database_client_started_ops_total",
+		Help: "The total number of database calls by the gRPC client",
+	})
+	opsFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "database_client_failed_ops_total",
+		Help: "The total number of failed database calls by the gRPC client",
+	})
+	opsSucceeded = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "database_client_successful_ops_total",
+		Help: "The total number of successful database calls by the gRPC client",
+	})
+)
 
 type server struct {
 	pb.UnimplementedAlbumsServer
 }
 
 func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
+	opsStarted.Inc()
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		opsFailed.Inc()
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	result, err := db.Exec("INSERT INTO album (title, artist, price, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Price, alb.Cover)
 	if err != nil {
+		opsFailed.Inc()
 		return nil, status.Error(
 			codes.Unknown, "Create failed: "+err.Error(),
 		)
@@ -43,24 +62,29 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 
 	id, err := result.LastInsertId()
 	if err != nil {
+		opsFailed.Inc()
 		return nil, status.Error(
 			codes.NotFound, "Failed to get last inset id: "+err.Error(),
 		)
 	}
 
+	opsSucceeded.Inc()
 	return &pb.Identifier{Id: id}, nil
 }
 
 func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
+	opsStarted.Inc()
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		opsFailed.Inc()
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	rows, err := db.Query("SELECT * FROM album")
 	if err != nil {
+		opsFailed.Inc()
 		return status.Error(
 			codes.Unknown,
 			"Failed to select: "+err.Error(),
@@ -71,6 +95,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 		var alb pb.Album
 		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
 		if err != nil {
+			opsFailed.Inc()
 			return status.Error(
 				codes.Unknown,
 				"Failed to scan row: "+err.Error(),
@@ -79,6 +104,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 
 		err = stream.Send(&alb)
 		if err != nil {
+			opsFailed.Inc()
 			return status.Error(
 				codes.Unknown,
 				"Failed to send row: "+err.Error(),
@@ -87,50 +113,60 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	}
 
 	if err := rows.Err(); err != nil {
+		opsFailed.Inc()
 		return status.Error(
 			codes.Unknown,
 			"Unable to read row: "+err.Error(),
 		)
 	}
 
+	opsSucceeded.Inc()
 	return nil
 }
 
 func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
+	opsStarted.Inc()
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		opsFailed.Inc()
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	_, err = db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
 	if err != nil {
+		opsFailed.Inc()
 		return nil, status.Error(
 			codes.Unknown,
 			"Failed to update record: "+err.Error(),
 		)
 	}
 
+	opsSucceeded.Inc()
 	return &pb.Nil{}, nil
 }
 
 func (s *server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
+	opsStarted.Inc()
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		opsFailed.Inc()
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	_, err = db.Exec("DELETE FROM album WHERE id=?", alb.ID)
 	if err != nil {
+		opsFailed.Inc()
 		return nil, status.Error(
 			codes.Unknown,
 			"Unable to delete record: "+err.Error(),
 		)
 	}
 
+	opsSucceeded.Inc()
 	return &pb.Nil{}, nil
 }
 
