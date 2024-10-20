@@ -1,7 +1,7 @@
 services:
   db:
     container_name: mysql-database
-    image: mysql:latest
+    image: mysql:8.0-bookworm
     volumes:
       - .:/docker-entrypoint-initdb.d
       - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
