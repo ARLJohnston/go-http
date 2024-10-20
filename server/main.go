@@ -181,13 +181,14 @@ func parseEnv(key, fallback string) string {
 func main() {
 	cfg = mysql.Config{
 		User:   parseEnv("MYSQL_USER", "dbuser"),
-		Passwd: parseEnv("MYSQL_USER_PASSWORD", "userpass"),
+		Passwd: parseEnv("MYSQL_PASSWORD", "userpass"),
 		Net:    parseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
 		Addr:   parseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
 		DBName: parseEnv("MYSQL_DATABASE_NAME", "album"),
 	}
 
-	listener, err := net.Listen("tcp", ":8080")
+	target := parseEnv("TARGET_ADDRESS", ":50051")
+	listener, err := net.Listen("tcp", target)
 	if err != nil {
 		log.Fatalln("Failed to create tcp listener", err)
 	}

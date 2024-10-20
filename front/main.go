@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"os"
 
 	"github.com/a-h/templ"
 
 	"github.com/ARLJohnston/go-http/pb"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Album struct {
@@ -27,18 +28,34 @@ var (
 	client pb.AlbumsClient
 )
 
-func main() {
-	conn, err := grpc.NewClient(":8080", grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
+func parseEnv(key, fallback string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
 	}
+	return value
+}
 
-	client = pb.NewAlbumsClient(conn)
-
+func main() {
+	//target := parseEnv("GRPC_TARGET", ":8080")
+	target := "client:50051"
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+		conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			msg := err.Error()
+			component := unavailable(msg)
+			templ.Handler(component).ServeHTTP(w, r)
+			return
+		}
+		client = pb.NewAlbumsClient(conn)
+
 		stream, err := client.Read(context.Background(), &pb.Nil{})
 		if err != nil {
-			log.Fatal(err)
+			msg := err.Error()
+			component := unavailable(msg)
+			templ.Handler(component).ServeHTTP(w, r)
+			return
 		}
 		// Create a channel to send data to the template.
 		data := make(chan Album)

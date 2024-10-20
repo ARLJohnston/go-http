@@ -1,0 +1,55 @@
+services:
+  front-end:
+    container_name: front-end
+    build: ./front
+    ports:
+      - "3000:3000"
+    environment:
+      GRPC_TARGET: client:50051
+    networks:
+      - front-end
+
+  client:
+    container_name: client
+    build: ./server
+    ports:
+      - "50051:50051"
+    environment:
+      MYSQL_DATABASE_ADDRESS: db:3306
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: userpass
+    networks:
+      - front-end
+      - back-end
+
+  db:
+    container_name: mysql
+    image: mysql:8.0-bookworm
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+      - ./server/create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
+    ports:
+      - "3306:3306/tcp"
+      - "33060:33060/tcp"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: userpass
+      MYSQL_DATABASE: album
+    restart: "unless-stopped"
+    networks:
+      - back-end
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - back-end
+
+networks:
+  front-end:
+    driver: bridge
+  back-end:
+    driver: bridge
