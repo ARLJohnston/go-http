@@ -37,8 +37,7 @@ func parseEnv(key, fallback string) string {
 }
 
 func main() {
-	//target := parseEnv("GRPC_TARGET", ":8080")
-	target := "client:50051"
+	target := parseEnv("GRPC_TARGET", ":50051")
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))

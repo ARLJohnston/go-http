@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"database/sql"
+
 	"github.com/go-sql-driver/mysql"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,8 +22,7 @@ import (
 )
 
 var (
-	db  *sql.DB
-	cfg mysql.Config
+	db *sql.DB
 
 	opsStarted = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "database_client_started_ops_total",
@@ -38,14 +38,23 @@ var (
 	})
 )
 
+func parseEnv(key, fallback string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+	}
+	return value
+}
+
 type server struct {
 	pb.UnimplementedAlbumsServer
+	cfg mysql.Config
 }
 
 func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
 	opsStarted.Inc()
 	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	db, err = sql.Open("mysql", s.cfg.FormatDSN())
 	if err != nil {
 		opsFailed.Inc()
 		log.Fatal(err)
@@ -75,7 +84,7 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	opsStarted.Inc()
 	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	db, err = sql.Open("mysql", s.cfg.FormatDSN())
 	if err != nil {
 		opsFailed.Inc()
 		log.Fatal(err)
@@ -127,7 +136,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
 	opsStarted.Inc()
 	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	db, err = sql.Open("mysql", s.cfg.FormatDSN())
 	if err != nil {
 		opsFailed.Inc()
 		log.Fatal(err)
@@ -150,7 +159,7 @@ func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, err
 func (s *server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	opsStarted.Inc()
 	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	db, err = sql.Open("mysql", s.cfg.FormatDSN())
 	if err != nil {
 		opsFailed.Inc()
 		log.Fatal(err)
@@ -170,23 +179,7 @@ func (s *server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	return &pb.Nil{}, nil
 }
 
-func parseEnv(key, fallback string) string {
-	value, ok := os.LookupEnv(key)
-	if !ok {
-		return fallback
-	}
-	return value
-}
-
 func main() {
-	cfg = mysql.Config{
-		User:   parseEnv("MYSQL_USER", "dbuser"),
-		Passwd: parseEnv("MYSQL_PASSWORD", "userpass"),
-		Net:    parseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
-		Addr:   parseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
-		DBName: parseEnv("MYSQL_DATABASE_NAME", "album"),
-	}
-
 	target := parseEnv("TARGET_ADDRESS", ":50051")
 	listener, err := net.Listen("tcp", target)
 	if err != nil {
@@ -196,7 +189,15 @@ func main() {
 	s := grpc.NewServer()
 	reflection.Register(s)
 
-	pb.RegisterAlbumsServer(s, &server{})
+	cfg := mysql.Config{
+		User:   parseEnv("MYSQL_USER", "root"),
+		Passwd: parseEnv("MYSQL_PASSWORD", "password"),
+		Net:    parseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
+		Addr:   parseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
+		DBName: parseEnv("MYSQL_DATABASE_NAME", "album"),
+	}
+
+	pb.RegisterAlbumsServer(s, &server{cfg: cfg})
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalln("Failed to serve gRPC Server", err)

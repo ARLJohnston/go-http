@@ -2,60 +2,61 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"testing"
-	"time"
 
 	"github.com/ARLJohnston/go-http/pb"
-	"github.com/go-sql-driver/mysql"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-func startContainer(ctx context.Context) (testcontainers.Container, func()) {
-	req := testcontainers.ContainerRequest{
-		Image:        "mysql:latest",
-		ExposedPorts: []string{"3306/tcp", "33060/tcp"},
-		Env: map[string]string{
-			"MYSQL_ROOT_PASSWORD": "password",
-			"MYSQL_DATABASE":      "albums",
-		},
-		Mounts:     make(testcontainers.ContainerMounts, 0),
-		WaitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL").WithStartupTimeout(60 * time.Second),
-	}
-
-	mysqlC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
+func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
+	mysqlC, err := mysql.Run(ctx, "mysql:8.0-bookworm",
+		mysql.WithDatabase("album"),
+		mysql.WithUsername("root"),
+		mysql.WithPassword("password"),
+		mysql.WithScripts("create-tables.sql"),
+	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Failed to start container: %v", err)
 	}
 
-	cleanup := func() {
-		err := mysqlC.Terminate(ctx)
-		if err != nil {
-			log.Fatalln(err)
-		}
+	port, err := mysqlC.MappedPort(ctx, "3306")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	return mysqlC, cleanup
+	return mysqlC, port.Port()
 }
 
 func TestStartContainer(t *testing.T) {
 	ctx := context.Background()
-	_, cleanup := startContainer(ctx)
-	defer cleanup()
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+	container, port := startContainer(ctx)
+	defer container.Terminate(ctx)
 
-	cfg = mysql.Config{
-		User:   parseEnv("MYSQL_USER", "root"),
-		Passwd: parseEnv("MYSQL_USER_PASSWORD", "password"),
-		Net:    parseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
-		Addr:   parseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
-		DBName: parseEnv("MYSQL_DATABASE_NAME", "album"),
-	}
+	// cfg = mysql.Config{
+	// 	User:   "root",
+	// 	Passwd: "password",
+	// 	Net:    "tcp",
+	// 	Addr:   "localhost:3306",
+	// 	DBName: "album",
+	// }
+	databaseAddress := fmt.Sprintf("localhost:%s", port)
+	os.Setenv("MYSQL_DATABASE_ADDRESS", databaseAddress)
 
-	s := server{}
+	// s := server{}
+	// s.cfg = msql.Config{
+	// 	User:   "root",
+	// 	Passwd: "password",
+	// 	Net:    "tcp",
+	// 	Addr:   databaseAddress,
+	// 	DBName: "album",
+	// }
+	go main()
 
 	req := &pb.Album{
 		ID:     1,
@@ -65,11 +66,18 @@ func TestStartContainer(t *testing.T) {
 		Cover:  "",
 	}
 
-	resp, err := s.Create(ctx, req)
+	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		t.Errorf("Unexpected error")
+		t.Errorf(err.Error())
 	}
-	if resp.Id == -1 {
+	client := pb.NewAlbumsClient(conn)
+	id, err := client.Create(ctx, req)
+
+	// resp, err := s.Create(ctx, req)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if id.Id == -1 {
 		t.Errorf("Did not get an identifier back for creation")
 	}
 
