@@ -12,6 +12,7 @@
 
 !*.go
 !go.*
+!*.sql
 
 !README.md
 !LICENSE
