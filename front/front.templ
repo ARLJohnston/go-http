@@ -1,0 +1,31 @@
+package main
+
+css gridcontainer() {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  padding: 10px;
+}
+
+css griditem() {
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  font-size: 30px;
+  text-align: center;
+}
+
+templ grid(albums chan Album){
+				<div class={ gridcontainer() }>
+								for alb := range albums {
+												@templ.Flush() {
+												<div class={ griditem }>
+				<img src={ alb.Cover } alt={ alb.Title } style="width:250px;height250px;"/>
+								<p>{ alb.Title } - { alb.Artist }</p>
+												</div>
+								}
+								}
+				</div>
+}
+
+templ unavailable(msg string) {
+				<p>Unable to connect to database: { msg }</p>
+}

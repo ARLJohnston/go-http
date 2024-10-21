@@ -13,6 +13,7 @@
 !*.go
 !go.*
 !*.sql
+!*.templ
 
 !README.md
 !LICENSE
