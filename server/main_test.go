@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
 	"github.com/ARLJohnston/go-http/pb"
+	msql "github.com/go-sql-driver/mysql"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
@@ -32,31 +30,13 @@ func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
 	return mysqlC, port.Port()
 }
 
-func TestStartContainer(t *testing.T) {
+func TestCreate(t *testing.T) {
 	ctx := context.Background()
 	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
 	container, port := startContainer(ctx)
 	defer container.Terminate(ctx)
 
-	// cfg = mysql.Config{
-	// 	User:   "root",
-	// 	Passwd: "password",
-	// 	Net:    "tcp",
-	// 	Addr:   "localhost:3306",
-	// 	DBName: "album",
-	// }
 	databaseAddress := fmt.Sprintf("localhost:%s", port)
-	os.Setenv("MYSQL_DATABASE_ADDRESS", databaseAddress)
-
-	// s := server{}
-	// s.cfg = msql.Config{
-	// 	User:   "root",
-	// 	Passwd: "password",
-	// 	Net:    "tcp",
-	// 	Addr:   databaseAddress,
-	// 	DBName: "album",
-	// }
-	go main()
 
 	req := &pb.Album{
 		ID:     1,
@@ -66,14 +46,116 @@ func TestStartContainer(t *testing.T) {
 		Cover:  "",
 	}
 
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Errorf(err.Error())
+	s := server{
+		cfg: msql.Config{
+			User:   "root",
+			Passwd: "password",
+			Net:    "tcp",
+			Addr:   databaseAddress,
+			DBName: "album",
+		},
 	}
-	client := pb.NewAlbumsClient(conn)
-	id, err := client.Create(ctx, req)
 
-	// resp, err := s.Create(ctx, req)
+	id, err := s.Create(ctx, req)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if id.Id == -1 {
+		t.Errorf("Did not get an identifier back for creation")
+	}
+}
+
+// func TestReadContainer(t *testing.T) {
+// 	ctx := context.Background()
+// 	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+// 	container, port := startContainer(ctx)
+// 	defer container.Terminate(ctx)
+
+// 	databaseAddress := fmt.Sprintf("localhost:%s", port)
+
+// 	s := server{
+// 		cfg: msql.Config{
+// 			User:   "root",
+// 			Passwd: "password",
+// 			Net:    "tcp",
+// 			Addr:   databaseAddress,
+// 			DBName: "album",
+// 		},
+// 	}
+
+// 	_ = s.Read(&pb.Nil{}, nil)
+// }
+
+func TestUpdate(t *testing.T) {
+	ctx := context.Background()
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+	container, port := startContainer(ctx)
+	defer container.Terminate(ctx)
+
+	databaseAddress := fmt.Sprintf("localhost:%s", port)
+
+	oldAlbum := &pb.Album{
+		ID:     1,
+		Title:  "Blue Train",
+		Artist: "John Coltrane",
+		Price:  56.99,
+		Cover:  "https://upload.wikimedia.org/wikipedia/en/thumb/6/68/John_Coltrane_-_Blue_Train.jpg/220px-John_Coltrane_-_Blue_Train.jpg",
+	}
+
+	newAlbum := &pb.Album{
+		ID:     1,
+		Title:  "Hello",
+		Artist: "World",
+		Price:  5.99,
+		Cover:  "",
+	}
+
+	s := server{
+		cfg: msql.Config{
+			User:   "root",
+			Passwd: "password",
+			Net:    "tcp",
+			Addr:   databaseAddress,
+			DBName: "album",
+		},
+	}
+
+	update := &pb.UpdateRequest{OldAlbum: oldAlbum, NewAlbum: newAlbum}
+
+	_, err := s.Update(ctx, update)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	//Read
+}
+
+func TestDelete(t *testing.T) {
+	ctx := context.Background()
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+	container, port := startContainer(ctx)
+	defer container.Terminate(ctx)
+
+	databaseAddress := fmt.Sprintf("localhost:%s", port)
+
+	req := &pb.Album{
+		ID:     1,
+		Title:  "Hello",
+		Artist: "World",
+		Price:  5.99,
+		Cover:  "",
+	}
+
+	s := server{
+		cfg: msql.Config{
+			User:   "root",
+			Passwd: "password",
+			Net:    "tcp",
+			Addr:   databaseAddress,
+			DBName: "album",
+		},
+	}
+
+	id, err := s.Create(ctx, req)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -81,4 +163,12 @@ func TestStartContainer(t *testing.T) {
 		t.Errorf("Did not get an identifier back for creation")
 	}
 
+	//Check that it is in it
+
+	_, err = s.Delete(ctx, req)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	//Check that it is not in it
 }
