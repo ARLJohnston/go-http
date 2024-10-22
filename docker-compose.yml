@@ -21,6 +21,8 @@ services:
     networks:
       - front-end
       - back-end
+    depends_on:
+      - db
 
   db:
     container_name: mysql
