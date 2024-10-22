@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -38,41 +39,39 @@ func parseEnv(key, fallback string) string {
 
 func main() {
 	target := parseEnv("GRPC_TARGET", ":50051")
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			msg := err.Error()
-			component := unavailable(msg)
-			templ.Handler(component).ServeHTTP(w, r)
-			return
+			log.Fatalf("%v", err)
 		}
 		client = pb.NewAlbumsClient(conn)
 
 		stream, err := client.Read(context.Background(), &pb.Nil{})
 		if err != nil {
-			msg := err.Error()
-			component := unavailable(msg)
-			templ.Handler(component).ServeHTTP(w, r)
-			return
+			log.Fatalf("%v", err)
 		}
-		// Create a channel to send data to the template.
 		data := make(chan Album)
-		//Prevent infinite loading
-		done := make(chan bool)
 
 		go func() {
 			defer close(data)
-			for {
-				select {
-				case <-r.Context().Done():
-					return
-				default:
+
+			done := make(chan bool)
+			defer close(done)
+
+			go func() {
+				for {
 					resp, err := stream.Recv()
 					if err == io.EOF {
 						done <- true
 						return
 					}
+					if err != nil {
+						log.Fatalf("cannot receive %v", err)
+					}
+
 					data <- Album{
 						ID:     resp.ID,
 						Title:  resp.Title,
@@ -81,15 +80,13 @@ func main() {
 						Cover:  resp.Cover,
 					}
 				}
-			}
-		}()
+			}()
 
-		// Pass the channel to the template.
+			<-done //we will wait until all response is received
+		}()
 		component := grid(data)
 
-		// Serve using the streaming mode of the handler.
 		templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
-		<-done
 	})
 
 	fmt.Println("Listening on : 3000")
