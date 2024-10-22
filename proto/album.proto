@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package album;
+
+option go_package = "github.com/ARLJohnston/go-http/pb";
+
+service Albums {
+	rpc Create(Album) returns (Identifier) {}
+	rpc Read(Nil) returns (stream Album) {}
+	rpc Update(UpdateRequest) returns (Nil) {}
+	rpc Delete(Album) returns (Nil) {}
+}
+
+message Album {
+  int64 id = 1;
+  string title = 2;
+  string artist = 3;
+  float price = 4;
+  string cover = 5;
+}
+
+message Identifier {
+	int64 id = 1;
+}
+
+message UpdateRequest {
+	Album oldAlbum = 1;
+	Album newAlbum = 2;
+}
+
+message Nil {
+}
