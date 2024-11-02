@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"net/http"
 	"os"
 
 	"google.golang.org/grpc"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/ARLJohnston/go-http/pb"
 )
@@ -185,6 +187,9 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to create tcp listener", err)
 	}
+
+	http.Handle("/metrics", promhttp.Handler())
+  go http.ListenAndServe(":2121", nil)
 
 	s := grpc.NewServer()
 	reflection.Register(s)

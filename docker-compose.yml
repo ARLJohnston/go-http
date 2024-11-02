@@ -8,6 +8,8 @@ services:
       GRPC_TARGET: client:50051
     networks:
       - front-end
+    depends_on:
+      - client
 
   client:
     container_name: client
@@ -49,6 +51,44 @@ services:
       - 8080:8080
     networks:
       - back-end
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - front-end
+      - back-end
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+    ports:
+      - "9100:9100"
+    networks:
+      - front-end
+      - back-end
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - front-end
+      - back-end
+    depends_on:
+      - prometheus
 
 networks:
   front-end:
