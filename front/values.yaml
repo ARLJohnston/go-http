@@ -1,0 +1,6 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/arljohnston/go-microservice-front:latest
+  pullPolicy: IfNotPresent
+  tag: "latest"
