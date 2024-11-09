@@ -1,7 +1,7 @@
 services:
   front-end:
     container_name: front-end
-    build: ./front
+    build: ../front
     ports:
       - "3000:3000"
     environment:
@@ -13,7 +13,7 @@ services:
 
   client:
     container_name: client
-    build: ./server
+    build: ../server
     ports:
       - "50051:50051"
     environment:
