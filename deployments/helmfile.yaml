@@ -1,0 +1,24 @@
+repositories:
+ - name: prometheus-community
+   url: https://prometheus-community.github.io/helm-charts
+
+ - name: bitnami
+   url: https://charts.bitnami.com/bitnami
+
+releases:
+- name: prom-norbac-ubuntu
+  namespace: prometheus
+  chart: prometheus-community/prometheus
+  set:
+  - name: rbac.create
+    value: false
+
+- name: mysql
+  namespace: mysql
+  chart: bitnami/mysql
+
+- name: db-client
+  chart: ./client
+
+- name: front-end
+  chart: ./front
