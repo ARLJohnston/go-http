@@ -15,6 +15,13 @@ jobs:
     - name: "Set up Go"
       uses: actions/setup-go@v5
 
+    - name: "Install Templ"
+      run: go install github.com/a-h/templ/cmd/templ@latest
+
+    - name: "Generate Templ files"
+      working-directory: ./front
+      run: templ generate
+
     - name: "Run tests"
       run: go test -race -coverprofile=coverage.txt -covermode atomic ./server ./front
 
