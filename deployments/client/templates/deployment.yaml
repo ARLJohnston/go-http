@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: front
-  namespace: front-end
+  name: client
+  namespace: db-client
   labels:
-    role: front
+    role: client
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      role: front
+      role: client
   template:
     metadata:
       labels:
-        role: front
+        role: client
     spec:
       containers:
-      - name: front
+      - name: db-client
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
@@ -24,4 +24,4 @@ spec:
             memory: "128Mi"
             cpu: "500m"
         ports:
-        - containerPort: 3000
+        - containerPort: 50051

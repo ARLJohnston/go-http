@@ -16,9 +16,15 @@ releases:
 - name: mysql
   namespace: mysql
   chart: bitnami/mysql
+  values:
+    - auth:
+        rootPassword: password
+        password: password
 
 - name: db-client
+  namespace: db-client
   chart: ./client
 
 - name: front-end
+  namespace: front-end
   chart: ./front
