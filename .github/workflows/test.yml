@@ -16,11 +16,7 @@ jobs:
       uses: actions/setup-go@v5
 
     - name: "Run tests"
-      run: go test
-        -race
-        -coverprofile=coverage.txt
-        -covermode atomic
-        ./server
+      run: go test -race -coverprofile=coverage.txt -covermode atomic ./server ./front
 
     - name: "Upload coverage reports to Codecov"
       uses: codecov/codecov-action@v4.0.1
