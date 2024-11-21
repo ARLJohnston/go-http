@@ -59,6 +59,7 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 	result, err := db.Exec("INSERT INTO album (id, title, artist, price, cover) VALUES (?, ?, ?, ?, ?)", alb.ID, alb.Title, alb.Artist, alb.Price, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Create failed:" + err.Error())
 		return nil, status.Error(
 			codes.Unknown, "Create failed: "+err.Error(),
 		)
@@ -67,8 +68,9 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 	id, err := result.LastInsertId()
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Failed to get last insert id: " + err.Error())
 		return nil, status.Error(
-			codes.NotFound, "Failed to get last inset id: "+err.Error(),
+			codes.NotFound, "Failed to get last insert id: "+err.Error(),
 		)
 	}
 
@@ -82,6 +84,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	rows, err := db.Query("SELECT * FROM album")
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Failed to select: " + err.Error())
 		return status.Error(
 			codes.Unknown,
 			"Failed to select: "+err.Error(),
@@ -99,6 +102,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 		}
 		if err != nil {
 			opsFailed.Inc()
+			log.Println("Failed to scan row: " + err.Error())
 			return status.Error(
 				codes.Unknown,
 				"Failed to scan row: "+err.Error(),
@@ -117,6 +121,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 
 	if err := rows.Err(); err != nil {
 		opsFailed.Inc()
+		log.Println("Unable to read row: " + err.Error())
 		return status.Error(
 			codes.Unknown,
 			"Unable to read row: "+err.Error(),
@@ -133,6 +138,7 @@ func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, err
 	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Failed to update record: " + err.Error())
 		return nil, status.Error(
 			codes.Unknown,
 			"Failed to update record: "+err.Error(),
@@ -149,6 +155,7 @@ func (s *server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.ID)
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Unable to delete record: " + err.Error())
 		return nil, status.Error(
 			codes.Unknown,
 			"Unable to delete record: "+err.Error(),
