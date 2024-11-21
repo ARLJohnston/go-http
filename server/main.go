@@ -50,7 +50,6 @@ func parseEnv(key, fallback string) string {
 
 type server struct {
 	pb.UnimplementedAlbumsServer
-	cfg mysql.Config
 }
 
 func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
@@ -194,7 +193,7 @@ func main() {
 	}
 	defer db.Close()
 
-	pb.RegisterAlbumsServer(s, &server{cfg: cfg})
+	pb.RegisterAlbumsServer(s, &server{})
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalln("Failed to serve gRPC Server", err)
