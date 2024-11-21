@@ -1,16 +1,17 @@
 import http from 'k6/http';
 import grpc from 'k6/net/grpc';
+import { vu, scenario } from 'k6/execution';
 import { check, sleep } from 'k6';
-import { Client } from 'k6/net/grpc';
-import { randomItem } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
+import { Client, Stream } from 'k6/net/grpc';
+import { Counter } from 'k6/metrics';
+import faker from "k6/x/faker";
 
-const images = ['https://raw.githubusercontent.com/msikma/pokesprite/refs/heads/master/icons/pokemon/regular/abomasnow-mega.png']
 
 export const options = {
   scenarios: {
-    grpcCreator: {
+    grpcCreatorDeletor: {
       executor: 'constant-vus',
-      exec: 'grpcCreate',
+      exec: 'grpcCreateDelete',
       vus: 10,
       duration: '30s',
     },
@@ -26,12 +27,12 @@ export const options = {
       vus: 10,
       duration: '30s',
     },
-		httpMetrics: {
+    httpMetrics: {
       executor: 'constant-vus',
       exec: 'httpMetricer',
       vus: 10,
       duration: '30s',
-		},
+    },
   },
 
 };
@@ -40,36 +41,67 @@ const client = new Client();
 client.load(['../proto/'], 'album.proto');
 
 
-export function grpcCreate() {
-	client.connect('127.0.0.1:50051', {plaintext: true});
+export function grpcCreateDelete() {
+  if (__ITER == 0) {
+    client.connect('127.0.0.1:50051', { plaintext: true });
+  }
 
-  const data = {id: 0, title: 'Title', artist: 'Artist', price: 12.99, cover: 'https://raw.githubusercontent.com/msikma/pokesprite/refs/heads/master/icons/pokemon/regular/abomasnow-mega.png'};
+  const imageURL = faker.internet.imageUrl(500,500);
+  const movie = faker.movie.movie();
+
+  const id = vu.idInTest + 10;
+
+  const data = {
+      id: id,
+      title: movie.name,
+      artist: movie.genre,
+      price: faker.payment.price(0,100),
+      cover: imageURL
+  };
 
   const response = client.invoke('album.Albums/Create', data);
 
+  // Update here
+
   check(response, {
     'status is OK': (r) => r && r.status === grpc.StatusOK,
   });
 
-	client.close()
+  sleep(0.1);
+
+  const deleteResponse = client.invoke('album.Albums/Delete', data);
+
+  check(deleteResponse, {
+    'status is OK': (r) => r && r.status === grpc.StatusOK,
+  });
 }
 
 export function grpcRead() {
-  client.connect('127.0.0.1:50051', {plaintext: true});
+  if (__ITER == 0) {
+    client.connect('127.0.0.1:50051', { plaintext: true });
+  }
+  const stream = new Stream(client, 'album.Albums/Read')
 
-  const data = {};
-	const response = client.invoke('album.Albums/Read', data);
-
-  check(response, {
-    'status is OK': (r) => r && r.status === grpc.StatusOK,
+  stream.on('data', function () {
+    console.log('Data');
   });
-	client.close()
+
+  stream.on("error", (e) => {
+    console.log("Error: " + JSON.stringify(e));
+    stream.end();
+  });
 }
 
 export function httpUser() {
-  http.get('http://127.0.0.1:3000/metrics');
+  const response = http.get('http://127.0.0.1:3000/');
+  check(response, {
+    'is status 200': (r) => r.status === 200,
+  });
 }
 
 export function httpMetricer() {
-  http.get('http://127.0.0.1:3000/');
+  const response = http.get('http://127.0.0.1:3000/metrics');
+  check(response, {
+    'is status 200': (r) => r.status === 200,
+  });
 }
