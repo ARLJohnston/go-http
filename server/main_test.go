@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/ARLJohnston/go-http/pb"
@@ -173,9 +174,8 @@ func TestDelete(t *testing.T) {
 	//Check that it is not in it
 }
 
-
 func TestParseEnv(t *testing.T) {
-  os.Setenv("VAR", "variable")
+	os.Setenv("VAR", "variable")
 	got := parseEnv("VAR", "fallback")
 	want := "variable"
 
