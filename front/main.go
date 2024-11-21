@@ -88,7 +88,8 @@ func main() {
 						return
 					}
 					if err != nil {
-						log.Fatalf("cannot receive %v", err)
+						log.Printf("cannot receive %v", err)
+						return
 					}
 
 					data <- Album{

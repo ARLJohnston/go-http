@@ -50,22 +50,15 @@ func parseEnv(key, fallback string) string {
 
 type server struct {
 	pb.UnimplementedAlbumsServer
-	cfg mysql.Config
 }
 
 func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
 	opsStarted.Inc()
-	var err error
-	db, err = sql.Open("mysql", s.cfg.FormatDSN())
-	if err != nil {
-		opsFailed.Inc()
-		log.Fatal(err)
-	}
-	defer db.Close()
 
-	result, err := db.Exec("INSERT INTO album (title, artist, price, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Price, alb.Cover)
+	result, err := db.Exec("INSERT INTO album (id, title, artist, price, cover) VALUES (?, ?, ?, ?, ?)", alb.ID, alb.Title, alb.Artist, alb.Price, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Create failed:" + err.Error())
 		return nil, status.Error(
 			codes.Unknown, "Create failed: "+err.Error(),
 		)
@@ -74,8 +67,9 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 	id, err := result.LastInsertId()
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Failed to get last insert id: " + err.Error())
 		return nil, status.Error(
-			codes.NotFound, "Failed to get last inset id: "+err.Error(),
+			codes.NotFound, "Failed to get last insert id: "+err.Error(),
 		)
 	}
 
@@ -85,17 +79,11 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 
 func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	opsStarted.Inc()
-	var err error
-	db, err = sql.Open("mysql", s.cfg.FormatDSN())
-	if err != nil {
-		opsFailed.Inc()
-		log.Fatal(err)
-	}
-	defer db.Close()
 
 	rows, err := db.Query("SELECT * FROM album")
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Failed to select: " + err.Error())
 		return status.Error(
 			codes.Unknown,
 			"Failed to select: "+err.Error(),
@@ -105,8 +93,15 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	for rows.Next() {
 		var alb pb.Album
 		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
+
+		// Client side cancellation
+		if status.Code(err) == codes.Canceled {
+			opsSucceeded.Inc()
+			return nil
+		}
 		if err != nil {
 			opsFailed.Inc()
+			log.Println("Failed to scan row: " + err.Error())
 			return status.Error(
 				codes.Unknown,
 				"Failed to scan row: "+err.Error(),
@@ -125,6 +120,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 
 	if err := rows.Err(); err != nil {
 		opsFailed.Inc()
+		log.Println("Unable to read row: " + err.Error())
 		return status.Error(
 			codes.Unknown,
 			"Unable to read row: "+err.Error(),
@@ -137,17 +133,11 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 
 func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
 	opsStarted.Inc()
-	var err error
-	db, err = sql.Open("mysql", s.cfg.FormatDSN())
-	if err != nil {
-		opsFailed.Inc()
-		log.Fatal(err)
-	}
-	defer db.Close()
 
-	_, err = db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
+	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Failed to update record: " + err.Error())
 		return nil, status.Error(
 			codes.Unknown,
 			"Failed to update record: "+err.Error(),
@@ -160,17 +150,11 @@ func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, err
 
 func (s *server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	opsStarted.Inc()
-	var err error
-	db, err = sql.Open("mysql", s.cfg.FormatDSN())
-	if err != nil {
-		opsFailed.Inc()
-		log.Fatal(err)
-	}
-	defer db.Close()
 
-	_, err = db.Exec("DELETE FROM album WHERE id=?", alb.ID)
+	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.ID)
 	if err != nil {
 		opsFailed.Inc()
+		log.Println("Unable to delete record: " + err.Error())
 		return nil, status.Error(
 			codes.Unknown,
 			"Unable to delete record: "+err.Error(),
@@ -187,9 +171,10 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to create tcp listener", err)
 	}
+	defer listener.Close()
 
 	http.Handle("/metrics", promhttp.Handler())
-  go http.ListenAndServe(":2121", nil)
+	go http.ListenAndServe(":2121", nil)
 
 	s := grpc.NewServer()
 	reflection.Register(s)
@@ -202,7 +187,13 @@ func main() {
 		DBName: parseEnv("MYSQL_DATABASE_NAME", "album"),
 	}
 
-	pb.RegisterAlbumsServer(s, &server{cfg: cfg})
+	db, err = sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		log.Fatalln("Failed to connect to database", err)
+	}
+	defer db.Close()
+
+	pb.RegisterAlbumsServer(s, &server{})
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalln("Failed to serve gRPC Server", err)

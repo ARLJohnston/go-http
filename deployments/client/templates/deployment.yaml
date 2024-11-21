@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: db-client
+  labels:
+    role: client
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      role: client
+  template:
+    metadata:
+      labels:
+        role: client
+    spec:
+      containers:
+      - name: db-client
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 50051

@@ -1,7 +1,7 @@
 services:
   front-end:
     container_name: front-end
-    build: ./front
+    build: ../front
     ports:
       - "3000:3000"
     environment:
@@ -13,7 +13,7 @@ services:
 
   client:
     container_name: client
-    build: ./server
+    build: ../server
     ports:
       - "50051:50051"
     environment:
@@ -31,7 +31,7 @@ services:
     image: mysql:8.0-bookworm
     volumes:
       - .:/docker-entrypoint-initdb.d
-      - ./server/create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
+      - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
     ports:
       - "3306:3306/tcp"
       - "33060:33060/tcp"
@@ -40,6 +40,7 @@ services:
       MYSQL_USER: dbuser
       MYSQL_PASSWORD: userpass
       MYSQL_DATABASE: album
+      MAX_USER_CONNECTIONS: 0 #https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_user_connections
     restart: "unless-stopped"
     networks:
       - back-end
@@ -51,16 +52,17 @@ services:
       - 8080:8080
     networks:
       - back-end
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - front-end
-      - back-end
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   volumes:
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - front-end
+  #     - back-end
 
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
@@ -77,18 +79,18 @@ services:
       - front-end
       - back-end
 
-  grafana:
-    image: grafana/grafana-oss:latest
-    container_name: grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    networks:
-      - front-end
-      - back-end
-    depends_on:
-      - prometheus
+  # grafana:
+  #   image: grafana/grafana-oss:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   networks:
+  #     - front-end
+  #     - back-end
+  #   depends_on:
+  #     - prometheus
 
 networks:
   front-end:
