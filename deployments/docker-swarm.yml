@@ -35,14 +35,9 @@ services:
       MYSQL_USER: dbuser
       MYSQL_PASSWORD: userpass
       MYSQL_DATABASE: album
-    restart: "unless-stopped"
-    deploy:
-      placement:
-        constraints: [node.== test1.spuddy.org]
 
   adminer:
     image: adminer
-    restart: always
     ports:
       - 8080:8080
 
@@ -59,8 +54,6 @@ services:
     container_name: node_exporter
     command:
       - '--path.rootfs=/host'
-    pid: host
-    restart: unless-stopped
     volumes:
       - '/:/host:ro,rslave'
     ports:
