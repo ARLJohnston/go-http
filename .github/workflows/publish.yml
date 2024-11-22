@@ -18,11 +18,11 @@ jobs:
       - name: "Build and Push Front"
         run: |
           docker login --username ARLJohnston --password ${{ secrets.GHCR_PAT }} ghcr.io
-          docker build ./front/ --tag ghcr.io/arljohnston/go-microservice-front:latest
+          docker build --platform linux/amd64,linux/aarch64 ./front/ --tag ghcr.io/arljohnston/go-microservice-front:latest
           docker push ghcr.io/arljohnston/go-microservice-front:latest
 
       - name: "Build and Push Server"
         run: |
           docker login --username ARLJohnston --password ${{ secrets.GHCR_PAT }} ghcr.io
-          docker build ./server/ --tag ghcr.io/arljohnston/go-microservice-server:latest
+          docker build --platform linux/amd64,linux/aarch64 ./server/ --tag ghcr.io/arljohnston/go-microservice-server:latest
           docker push ghcr.io/arljohnston/go-microservice-server:latest
