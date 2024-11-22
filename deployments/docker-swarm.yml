@@ -1,0 +1,77 @@
+services:
+  front-end:
+    container_name: front-end
+    image: ghcr.io/arljohnston/go-microservice-front:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GRPC_TARGET: client:50051
+    depends_on:
+      - client
+
+  client:
+    container_name: client
+    image: ghcr.io/arljohnston/go-microservice-server:latest
+    ports:
+      - "50051:50051"
+    environment:
+      MYSQL_DATABASE_ADDRESS: db:3306
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: userpass
+    depends_on:
+      - db
+
+  db:
+    container_name: mysql
+    image: mysql:lts
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+      - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
+    ports:
+      - "3306:3306/tcp"
+      - "33060:33060/tcp"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: dbuser
+      MYSQL_PASSWORD: userpass
+      MYSQL_DATABASE: album
+    restart: "unless-stopped"
+    deploy:
+      placement:
+        constraints: [node.== test1.spuddy.org]
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+    ports:
+      - "9100:9100"
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
