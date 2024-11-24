@@ -1,6 +1,5 @@
 services:
   front-end:
-    container_name: front-end
     image: ghcr.io/arljohnston/go-microservice-front:latest
     ports:
       - "3000:3000"
@@ -10,7 +9,6 @@ services:
       - client
 
   client:
-    container_name: client
     image: ghcr.io/arljohnston/go-microservice-server:latest
     ports:
       - "50051:50051"
@@ -22,7 +20,6 @@ services:
       - db
 
   db:
-    container_name: mysql
     image: mysql:lts
     volumes:
       - .:/docker-entrypoint-initdb.d
@@ -43,7 +40,6 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -51,7 +47,6 @@ services:
 
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
-    container_name: node_exporter
     command:
       - '--path.rootfs=/host'
     volumes:
@@ -61,7 +56,6 @@ services:
 
   grafana:
     image: grafana/grafana-oss:latest
-    container_name: grafana
     ports:
       - "3001:3000"
     environment:
