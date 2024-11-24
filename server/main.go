@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -48,11 +49,11 @@ func parseEnv(key, fallback string) string {
 	return value
 }
 
-type server struct {
+type Server struct {
 	pb.UnimplementedAlbumsServer
 }
 
-func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
+func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
 	opsStarted.Inc()
 
 	result, err := db.Exec("INSERT INTO album (id, title, artist, price, cover) VALUES (?, ?, ?, ?, ?)", alb.ID, alb.Title, alb.Artist, alb.Price, alb.Cover)
@@ -77,7 +78,7 @@ func (s *server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 	return &pb.Identifier{Id: id}, nil
 }
 
-func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
+func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	opsStarted.Inc()
 
 	rows, err := db.Query("SELECT * FROM album")
@@ -91,6 +92,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	}
 
 	for rows.Next() {
+		fmt.Println(rows)
 		var alb pb.Album
 		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
 
@@ -131,7 +133,7 @@ func (s *server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	return nil
 }
 
-func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
+func (s *Server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
 	opsStarted.Inc()
 
 	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
@@ -148,7 +150,7 @@ func (s *server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, err
 	return &pb.Nil{}, nil
 }
 
-func (s *server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
+func (s *Server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	opsStarted.Inc()
 
 	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.ID)
@@ -193,7 +195,7 @@ func main() {
 	}
 	defer db.Close()
 
-	pb.RegisterAlbumsServer(s, &server{})
+	pb.RegisterAlbumsServer(s, &Server{})
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalln("Failed to serve gRPC Server", err)

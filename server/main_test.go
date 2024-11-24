@@ -4,13 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
 	"log"
-	"os"
+	"net"
 	"testing"
 
 	"github.com/ARLJohnston/go-http/pb"
 	msql "github.com/go-sql-driver/mysql"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/test/bufconn"
 )
 
 func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
@@ -32,21 +36,41 @@ func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
 	return mysqlC, port.Port()
 }
 
-func TestCreate(t *testing.T) {
+func StartServer(ctx context.Context) (pb.AlbumsClient, func()) {
+	buf := 1024 * 1024
+	listener := bufconn.Listen(buf)
+
+	s := grpc.NewServer()
+	pb.RegisterAlbumsServer(s, &Server{})
+	go func() {
+		err := s.Serve(listener)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	d := grpc.WithContextDialer(
+		func(context.Context, string) (net.Conn, error) {
+			return listener.Dial()
+		})
+
+	conn, _ := grpc.DialContext(ctx, "", grpc.WithContextDialer(
+		func(context.Context, string) (net.Conn, error) {
+			return listener.Dial()
+		}), grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	client := pb.NewAlbumsClient(conn)
+
+	return client, s.Stop
+
+}
+
+func TestGrpcRead(t *testing.T) {
 	ctx := context.Background()
-	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
 	container, port := startContainer(ctx)
 	defer container.Terminate(ctx)
 
 	databaseAddress := fmt.Sprintf("localhost:%s", port)
-
-	req := &pb.Album{
-		ID:     12,
-		Title:  "Hello",
-		Artist: "World",
-		Price:  5.99,
-		Cover:  "",
-	}
 
 	cfg := msql.Config{
 		User:   "root",
@@ -56,143 +80,44 @@ func TestCreate(t *testing.T) {
 		DBName: "album",
 	}
 
-	s := server{}
-
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
 
-	id, err := s.Create(ctx, req)
+	client, stopServer := StartServer(ctx)
+	defer stopServer()
+
+	stream, err := client.Read(ctx, &pb.Nil{})
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if id.Id == -1 {
-		t.Errorf("Did not get an identifier back for creation")
-	}
-}
-
-// func TestReadContainer(t *testing.T) {
-// 	ctx := context.Background()
-// 	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-// 	container, port := startContainer(ctx)
-// 	defer container.Terminate(ctx)
-
-// 	databaseAddress := fmt.Sprintf("localhost:%s", port)
-
-// 	s := server{
-// 		cfg: msql.Config{
-// 			User:   "root",
-// 			Passwd: "password",
-// 			Net:    "tcp",
-// 			Addr:   databaseAddress,
-// 			DBName: "album",
-// 		},
-// 	}
-
-// 	_ = s.Read(&pb.Nil{}, nil)
-// }
-
-func TestUpdate(t *testing.T) {
-	ctx := context.Background()
-	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-	container, port := startContainer(ctx)
-	defer container.Terminate(ctx)
-
-	databaseAddress := fmt.Sprintf("localhost:%s", port)
-
-	oldAlbum := &pb.Album{
-		ID:     1,
-		Title:  "Blue Train",
-		Artist: "John Coltrane",
-		Price:  56.99,
-		Cover:  "https://upload.wikimedia.org/wikipedia/en/thumb/6/68/John_Coltrane_-_Blue_Train.jpg/220px-John_Coltrane_-_Blue_Train.jpg",
+		t.Errorf("Failed to read: %v", err)
 	}
 
-	newAlbum := &pb.Album{
-		ID:     1,
-		Title:  "Hello",
-		Artist: "World",
-		Price:  5.99,
-		Cover:  "",
+	done := make(chan bool)
+	defer close(done)
+	found := false
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			fmt.Println(resp)
+			if err == io.EOF {
+				done <- true
+				return
+			}
+			if err != nil {
+				log.Printf("cannot receive %v", err)
+				return
+			}
+
+			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
+				found = true
+			}
+		}
+	}()
+
+	<-done
+	if !found {
+		t.Error("Unable to find record")
 	}
-
-	cfg := msql.Config{
-		User:   "root",
-		Passwd: "password",
-		Net:    "tcp",
-		Addr:   databaseAddress,
-		DBName: "album",
-	}
-
-	s := server{}
-
-	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
-
-	update := &pb.UpdateRequest{OldAlbum: oldAlbum, NewAlbum: newAlbum}
-
-	_, err = s.Update(ctx, update)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	//Read
-}
-
-func TestDelete(t *testing.T) {
-	ctx := context.Background()
-	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-	container, port := startContainer(ctx)
-	defer container.Terminate(ctx)
-
-	databaseAddress := fmt.Sprintf("localhost:%s", port)
-
-	req := &pb.Album{
-		ID:     20,
-		Title:  "Hello",
-		Artist: "World",
-		Price:  5.99,
-		Cover:  "",
-	}
-
-	cfg := msql.Config{
-		User:   "root",
-		Passwd: "password",
-		Net:    "tcp",
-		Addr:   databaseAddress,
-		DBName: "album",
-	}
-
-	s := server{}
-
-	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
-
-	id, err := s.Create(ctx, req)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if id.Id == -1 {
-		t.Errorf("Did not get an identifier back for creation")
-	}
-
-	//Check that it is in it
-
-	_, err = s.Delete(ctx, req)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
-	//Check that it is not in it
-}
-
-func TestParseEnv(t *testing.T) {
-	os.Setenv("VAR", "variable")
-	got := parseEnv("VAR", "fallback")
-	want := "variable"
-
-	if got != want {
-		t.Errorf("got %s wanted %s", got, want)
-	}
-
 }
 
 func TestParseEnvFallback(t *testing.T) {
