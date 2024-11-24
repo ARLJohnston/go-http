@@ -49,11 +49,6 @@ func StartServer(ctx context.Context) (pb.AlbumsClient, func()) {
 		}
 	}()
 
-	d := grpc.WithContextDialer(
-		func(context.Context, string) (net.Conn, error) {
-			return listener.Dial()
-		})
-
 	conn, _ := grpc.DialContext(ctx, "", grpc.WithContextDialer(
 		func(context.Context, string) (net.Conn, error) {
 			return listener.Dial()
