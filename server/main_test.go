@@ -124,35 +124,69 @@ func TestGrpcUpdate(t *testing.T) {
 	}
 }
 
-// func TestReadFailsWhenNoDB(t *testing.T) {
-// 	ctx := context.Background()
-// 	cfgNoDB := msql.Config{
-// 		User:   "root",
-// 		Passwd: "password",
-// 		Net:    "tcp",
-// 		Addr:   "3307", // Ensure we do not hit the db
-// 		DBName: "album",
-// 	}
+func TestGrpcDelete(t *testing.T) {
+	record := pb.Album{ID: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Price: 0}
 
-// 	var err error
-// 	db, err = sql.Open("mysql", cfgNoDB.FormatDSN())
+	id, err := client.Create(ctx, &record)
+	if err != nil {
+		t.Errorf("Unable to create record: %v", err)
+	}
+	if id == nil {
+		t.Errorf("Create did not return an identifier")
+	}
+	record.ID = id.Id
 
-// 	cli, stopServer := StartServer(ctx)
-// 	defer stopServer()
+	_, err = client.Delete(ctx, &record)
+	if err != nil {
+		t.Errorf("Unable to delete record: %v", err)
+	}
 
-// 	_, err = cli.Read(ctx, &pb.Nil{})
-// 	stat, ok := status.FromError(err)
-// 	if !ok {
-// 		t.Errorf("Unable to convert error to status.Error: %v", err)
-// 	}
-// 	if stat.Code() != codes.NotFound {
-// 		t.Errorf("Status did not contain expected code: %v", stat.Code())
-// 	}
-// }
+	stream, err := client.Read(ctx, &pb.Nil{})
+	if err != nil {
+		t.Errorf("Failed to read: %v", err)
+	}
+
+	done := make(chan bool)
+	defer close(done)
+	found := false
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				done <- true
+				return
+			}
+			if err != nil {
+				log.Printf("cannot receive %v", err)
+				return
+			}
+
+			if resp.ID == id.Id {
+				found = true
+			}
+		}
+	}()
+
+	<-done
+	if found {
+		t.Error("Found deleted Record")
+	}
+}
 
 func TestParseEnvFallback(t *testing.T) {
 	got := parseEnv("veryspecific", "fallback")
 	want := "fallback"
+
+	if got != want {
+		t.Errorf("got %s wanted %s", got, want)
+	}
+}
+
+func TestParseEnv(t *testing.T) {
+	os.Setenv("env", "val")
+	got := parseEnv("env", "fallback")
+	want := "val"
 
 	if got != want {
 		t.Errorf("got %s wanted %s", got, want)
