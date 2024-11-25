@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ARLJohnston/go-http/pb"
 	msql "github.com/go-sql-driver/mysql"
@@ -200,7 +201,8 @@ func TestParseEnv(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	ctx = context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	container, port := startContainer(ctx)
 
 	cfg.Addr = fmt.Sprintf("localhost:%s", port)
