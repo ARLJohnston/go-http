@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/ARLJohnston/go-http/pb"
@@ -16,6 +17,168 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 )
+
+var (
+	client pb.AlbumsClient
+	ctx    context.Context
+	cfg    msql.Config = msql.Config{
+		User:   "root",
+		Passwd: "password",
+		Net:    "tcp",
+		DBName: "album",
+	}
+)
+
+func TestGrpcCreate(t *testing.T) {
+	record := pb.Album{ID: 100, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
+
+	id, err := client.Create(ctx, &record)
+	if err != nil {
+		t.Errorf("Unable to create record: %v", err)
+	}
+	if id == nil {
+		t.Errorf("Create did not return an identifier")
+	}
+
+	stream, err := client.Read(ctx, &pb.Nil{})
+	if err != nil {
+		t.Errorf("Failed to read: %v", err)
+	}
+
+	done := make(chan bool)
+	defer close(done)
+	found := false
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				done <- true
+				return
+			}
+			if err != nil {
+				log.Printf("cannot receive %v", err)
+				return
+			}
+
+			if resp.Title == "Record" && resp.Artist == "Create" {
+				found = true
+			}
+		}
+	}()
+
+	<-done
+	if !found {
+		t.Error("Unable to find created record")
+	}
+}
+
+func TestGrpcRead(t *testing.T) {
+	stream, err := client.Read(ctx, &pb.Nil{})
+	if err != nil {
+		t.Errorf("Failed to read: %v", err)
+	}
+
+	done := make(chan bool)
+	defer close(done)
+	found := false
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				done <- true
+				return
+			}
+			if err != nil {
+				log.Printf("cannot receive %v", err)
+				return
+			}
+
+			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
+				found = true
+			}
+		}
+	}()
+
+	<-done
+	if !found {
+		t.Error("Unable to find record")
+	}
+}
+
+func TestGrpcUpdate(t *testing.T) {
+	record := pb.Album{ID: 101, Artist: "Old", Title: "Record", Cover: "Cover", Price: 0}
+
+	id, err := client.Create(ctx, &record)
+	if err != nil {
+		t.Errorf("Unable to create record: %v", err)
+	}
+
+	newRecord := pb.Album{ID: id.Id, Artist: "New", Title: "Record", Cover: "Cover"}
+	req := pb.UpdateRequest{OldAlbum: &record, NewAlbum: &newRecord}
+
+	_, err = client.Update(ctx, &req)
+	if err != nil {
+		t.Errorf("Unable to update record: %v", err)
+	}
+}
+
+// func TestReadFailsWhenNoDB(t *testing.T) {
+// 	ctx := context.Background()
+// 	cfgNoDB := msql.Config{
+// 		User:   "root",
+// 		Passwd: "password",
+// 		Net:    "tcp",
+// 		Addr:   "3307", // Ensure we do not hit the db
+// 		DBName: "album",
+// 	}
+
+// 	var err error
+// 	db, err = sql.Open("mysql", cfgNoDB.FormatDSN())
+
+// 	cli, stopServer := StartServer(ctx)
+// 	defer stopServer()
+
+// 	_, err = cli.Read(ctx, &pb.Nil{})
+// 	stat, ok := status.FromError(err)
+// 	if !ok {
+// 		t.Errorf("Unable to convert error to status.Error: %v", err)
+// 	}
+// 	if stat.Code() != codes.NotFound {
+// 		t.Errorf("Status did not contain expected code: %v", stat.Code())
+// 	}
+// }
+
+func TestParseEnvFallback(t *testing.T) {
+	got := parseEnv("veryspecific", "fallback")
+	want := "fallback"
+
+	if got != want {
+		t.Errorf("got %s wanted %s", got, want)
+	}
+}
+
+func TestMain(m *testing.M) {
+	ctx = context.Background()
+	container, port := startContainer(ctx)
+
+	cfg.Addr = fmt.Sprintf("localhost:%s", port)
+
+	var err error
+	db, err = sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		panic("Unable to connect to container")
+	}
+
+	cli, stopServer := StartServer(ctx)
+	client = cli
+
+	ret := m.Run()
+	stopServer()
+	container.Terminate(ctx)
+	os.Exit(ret)
+}
 
 func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
 	mysqlC, err := mysql.Run(ctx, "mysql:8.0-bookworm",
@@ -57,70 +220,4 @@ func StartServer(ctx context.Context) (pb.AlbumsClient, func()) {
 	client := pb.NewAlbumsClient(conn)
 
 	return client, s.Stop
-
-}
-
-func TestGrpcRead(t *testing.T) {
-	ctx := context.Background()
-	container, port := startContainer(ctx)
-	defer container.Terminate(ctx)
-
-	databaseAddress := fmt.Sprintf("localhost:%s", port)
-
-	cfg := msql.Config{
-		User:   "root",
-		Passwd: "password",
-		Net:    "tcp",
-		Addr:   databaseAddress,
-		DBName: "album",
-	}
-
-	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
-
-	client, stopServer := StartServer(ctx)
-	defer stopServer()
-
-	stream, err := client.Read(ctx, &pb.Nil{})
-	if err != nil {
-		t.Errorf("Failed to read: %v", err)
-	}
-
-	done := make(chan bool)
-	defer close(done)
-	found := false
-
-	go func() {
-		for {
-			resp, err := stream.Recv()
-			fmt.Println(resp)
-			if err == io.EOF {
-				done <- true
-				return
-			}
-			if err != nil {
-				log.Printf("cannot receive %v", err)
-				return
-			}
-
-			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
-				found = true
-			}
-		}
-	}()
-
-	<-done
-	if !found {
-		t.Error("Unable to find record")
-	}
-}
-
-func TestParseEnvFallback(t *testing.T) {
-	got := parseEnv("veryspecific", "fallback")
-	want := "fallback"
-
-	if got != want {
-		t.Errorf("got %s wanted %s", got, want)
-	}
-
 }
