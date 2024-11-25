@@ -63,6 +63,7 @@ func TestGrpcCreate(t *testing.T) {
 
 			if resp.Title == "Record" && resp.Artist == "Create" {
 				found = true
+				return
 			}
 		}
 	}()
@@ -97,6 +98,7 @@ func TestGrpcRead(t *testing.T) {
 
 			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
 				found = true
+				return
 			}
 		}
 	}()
@@ -164,6 +166,7 @@ func TestGrpcDelete(t *testing.T) {
 
 			if resp.ID == id.Id {
 				found = true
+				return
 			}
 		}
 	}()
