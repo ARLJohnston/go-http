@@ -60,7 +60,7 @@ func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 		opsFailed.Inc()
 		log.Println("Create failed:" + err.Error())
 		return nil, status.Error(
-			codes.Unknown, "Create failed: "+err.Error(),
+			codes.Internal, "Create failed: "+err.Error(),
 		)
 	}
 

@@ -17,11 +17,10 @@ func Test(t *testing.T) {
 	}
 	defer db.Close()
 
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO album").WithArgs("Title", "Artist", 12.99, "Cover").WillReturnError(fmt.Errorf("some error"))
+	mock.ExpectExec("INSERT INTO album").WithArgs("Title", "Artist", 5.0, "Cover").WillReturnError(fmt.Errorf("some error"))
 	mock.ExpectRollback()
 
-	album := pb.Album{Title: "Title", Artist: "Artist", Price: 12.99, Cover: "Cover"}
+	album := pb.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()
@@ -29,5 +28,9 @@ func Test(t *testing.T) {
 	id, err := s.Create(ctx, &album)
 	if id != nil {
 		t.Errorf("Expected no id to be returned, got %d", id.Id)
+	}
+
+	if err == nil {
+		t.Errorf("Expected an error, got nil")
 	}
 }
