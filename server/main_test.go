@@ -30,7 +30,7 @@ var (
 )
 
 func TestGrpcCreate(t *testing.T) {
-	record := pb.Album{ID: 100, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
+	record := pb.Album{ID: 0, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -63,6 +63,7 @@ func TestGrpcCreate(t *testing.T) {
 
 			if resp.Title == "Record" && resp.Artist == "Create" {
 				found = true
+				done <- true
 				return
 			}
 		}
@@ -98,6 +99,7 @@ func TestGrpcRead(t *testing.T) {
 
 			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
 				found = true
+				done <- true
 				return
 			}
 		}
@@ -166,6 +168,7 @@ func TestGrpcDelete(t *testing.T) {
 
 			if resp.ID == id.Id {
 				found = true
+				done <- true
 				return
 			}
 		}
