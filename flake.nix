@@ -45,6 +45,7 @@
         (templ system)
       ];
       CGO_ENABLED="0";
+      NIX_HARDENING_ENABLE=""; # Fix delve issue
     });
   };
 }

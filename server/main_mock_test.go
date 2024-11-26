@@ -7,9 +7,11 @@ import (
 
 	"github.com/ARLJohnston/go-http/pb"
 	"github.com/DATA-DOG/go-sqlmock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func Test(t *testing.T) {
+func TestFailWhenNoDB(t *testing.T) {
 	data, mock, err := sqlmock.New()
 	db = data
 	if err != nil {
@@ -31,6 +33,13 @@ func Test(t *testing.T) {
 	}
 
 	if err == nil {
-		t.Errorf("Expected an error, got nil")
+		t.Errorf("Expected an err, got nil")
+	}
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Errorf("Unable to convert error to status")
+	}
+	if status.Code() != codes.Internal {
+		t.Errorf("Unexpected error returned: %v", err)
 	}
 }
