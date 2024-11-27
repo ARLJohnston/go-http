@@ -94,11 +94,6 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 		var alb pb.Album
 		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
 
-		// Client side cancellation
-		if status.Code(err) == codes.Canceled {
-			opsSucceeded.Inc()
-			return nil
-		}
 		if err != nil {
 			opsFailed.Inc()
 			log.Println("Failed to scan row: " + err.Error())
@@ -118,7 +113,8 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 		}
 	}
 
-	if err := rows.Err(); err != nil {
+	err = rows.Err()
+	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to read row: " + err.Error())
 		return status.Error(
