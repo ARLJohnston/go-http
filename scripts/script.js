@@ -6,32 +6,36 @@ import { Client, Stream } from 'k6/net/grpc';
 import { Counter } from 'k6/metrics';
 import faker from "k6/x/faker";
 
+const defaultOptions = {
+		vus: 10,
+		duration: '30s'
+};
 
 export const options = {
   scenarios: {
     grpcCreatorDeletor: {
       executor: 'constant-vus',
       exec: 'grpcCreateDelete',
-      vus: 10,
-      duration: '30s',
+      vus: defaultOptions.vus,
+      duration: defaultOptions.duration,
     },
     grpcReader: {
       executor: 'constant-vus',
       exec: 'grpcRead',
-      vus: 10,
-      duration: '30s',
+      vus: defaultOptions.vus,
+      duration: defaultOptions.duration,
     },
     httpUser: {
       executor: 'constant-vus',
       exec: 'httpUser',
-      vus: 10,
-      duration: '30s',
+      vus: defaultOptions.vus,
+      duration: defaultOptions.duration,
     },
     httpMetrics: {
       executor: 'constant-vus',
       exec: 'httpMetricer',
-      vus: 10,
-      duration: '30s',
+      vus: defaultOptions.vus,
+      duration: defaultOptions.duration,
     },
   },
 
