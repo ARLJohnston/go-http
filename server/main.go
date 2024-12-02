@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -56,12 +55,12 @@ type Server struct {
 func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
 	opsStarted.Inc()
 
-	result, err := db.Exec("INSERT INTO album (id, title, artist, price, cover) VALUES (?, ?, ?, ?, ?)", alb.ID, alb.Title, alb.Artist, alb.Price, alb.Cover)
+	result, err := db.Exec("INSERT INTO album (title, artist, price, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Price, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Create failed:" + err.Error())
 		return nil, status.Error(
-			codes.Unknown, "Create failed: "+err.Error(),
+			codes.Internal, "Create failed: "+err.Error(),
 		)
 	}
 
@@ -86,21 +85,15 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 		opsFailed.Inc()
 		log.Println("Failed to select: " + err.Error())
 		return status.Error(
-			codes.Unknown,
+			codes.NotFound,
 			"Failed to select: "+err.Error(),
 		)
 	}
 
 	for rows.Next() {
-		fmt.Println(rows)
 		var alb pb.Album
 		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
 
-		// Client side cancellation
-		if status.Code(err) == codes.Canceled {
-			opsSucceeded.Inc()
-			return nil
-		}
 		if err != nil {
 			opsFailed.Inc()
 			log.Println("Failed to scan row: " + err.Error())
@@ -120,7 +113,8 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 		}
 	}
 
-	if err := rows.Err(); err != nil {
+	err = rows.Err()
+	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to read row: " + err.Error())
 		return status.Error(

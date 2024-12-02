@@ -49,10 +49,8 @@ export function grpcCreateDelete() {
   const imageURL = faker.internet.imageUrl(500,500);
   const movie = faker.movie.movie();
 
-  const id = vu.idInTest + 10;
-
   const data = {
-      id: id,
+      id: vu.idInTest,
       title: movie.name,
       artist: movie.genre,
       price: faker.payment.price(0,100),
@@ -67,9 +65,16 @@ export function grpcCreateDelete() {
     'status is OK': (r) => r && r.status === grpc.StatusOK,
   });
 
+  const deleteReq = {
+      id: response.id,
+      title: movie.name,
+      artist: movie.genre,
+      price: faker.payment.price(0,100),
+      cover: imageURL
+  };
   sleep(0.1);
 
-  const deleteResponse = client.invoke('album.Albums/Delete', data);
+  const deleteResponse = client.invoke('album.Albums/Delete', deleteReq);
 
   check(deleteResponse, {
     'status is OK': (r) => r && r.status === grpc.StatusOK,

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 )
@@ -22,5 +24,15 @@ func TestParseEnvFallback(t *testing.T) {
 
 	if got != want {
 		t.Errorf("got %s wanted %s", got, want)
+	}
+}
+
+func TestPagePosts(t *testing.T) {
+	wr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	handleLoad(wr, req)
+	if wr.Code != http.StatusOK {
+		t.Errorf("got HTTP status code %d, expected 200", wr.Code)
 	}
 }
