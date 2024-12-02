@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/ARLJohnston/go-http/pb v0.0.0-20241018155842-78ceaf9efab7
-	github.com/a-h/templ v0.2.778
+	github.com/a-h/templ v0.2.793
 	github.com/prometheus/client_golang v1.20.5
 	google.golang.org/grpc v1.67.1
 )

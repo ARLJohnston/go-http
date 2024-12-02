@@ -104,6 +104,10 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 	templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
 }
 
+func post(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "This was clicked")
+}
+
 func main() {
 	target = parseEnv("GRPC_TARGET", ":50051")
 
@@ -111,6 +115,7 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("/", handleLoad)
+	http.HandleFunc("/post", post)
 
 	fmt.Println("Listening on : 3000")
 	http.ListenAndServe(":3000", nil)
