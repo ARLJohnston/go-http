@@ -20,18 +20,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// Representation of an Album
 type Album struct {
-	ID     int64
-	Title  string
-	Artist string
-	Price  float32
-	Cover  string
+	ID     int64   // SQL Identifier
+	Title  string  // Album title
+	Artist string  // Album artist
+	Price  float32 // Price of the album
+	Cover  string  // Link to image of the cover
 }
 
 var (
-	target string
-	conn   *grpc.ClientConn
-	client pb.AlbumsClient
+	target string          // Where gRPC client to dataase is located
+	client pb.AlbumsClient // Active gRPC connection to the client
 
 	pageLoads = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "front_end_page_loads_total",
@@ -50,6 +50,8 @@ func parseEnv(key, fallback string) string {
 	}
 	return value
 }
+
+// Reads from the database via gRPC and populates the template with streaming
 func handleLoad(w http.ResponseWriter, r *http.Request) {
 	pageLoads.Inc()
 	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -104,10 +106,12 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 	templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
 }
 
+// Content of buttons in grid
 func post(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "This was clicked")
 }
 
+// Starts http server with appropriate routes
 func main() {
 	target = parseEnv("GRPC_TARGET", ":50051")
 
