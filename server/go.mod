@@ -1,6 +1,6 @@
 module github.com/ARLJohnston/go-http/server
 
-go 1.23.2
+go 1.23.3
 
 require (
 	github.com/ARLJohnston/go-http/pb v0.0.0-20241018151055-42966f5b8dea
