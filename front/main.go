@@ -10,7 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 
-	"github.com/ARLJohnston/go-http/pb"
+	"github.com/ARLJohnston/go-http/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

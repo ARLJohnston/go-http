@@ -2,6 +2,6 @@ go 1.23.2
 
 use (
 	./front
-	./pb
+	./proto
 	./server
 )

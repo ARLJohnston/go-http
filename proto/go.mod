@@ -1,4 +1,4 @@
-module github.com/ARLJohnston/go-http/pb
+module github.com/ARLJohnston/go-http/proto
 
 go 1.23.2
 

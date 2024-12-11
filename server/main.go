@@ -21,7 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ARLJohnston/go-http/pb"
+	"github.com/ARLJohnston/go-http/proto"
 )
 
 var (

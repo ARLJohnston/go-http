@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ARLJohnston/go-http/pb"
+	"github.com/ARLJohnston/go-http/proto"
 	msql "github.com/go-sql-driver/mysql"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
 	"google.golang.org/grpc"
