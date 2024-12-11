@@ -96,7 +96,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 
 	for rows.Next() {
 		var alb proto.Album
-		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
+		err = rows.Scan(&alb.Id, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
 
 		if err != nil {
 			opsFailed.Inc()
@@ -131,11 +131,11 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 	return nil
 }
 
-// Given an UpdateRequest in, updates in.OldAlbum to be in.NewAlbum without altering the ID
+// Given an UpdateRequest in, updates in.OldAlbum to be in.NewAlbum without altering the Id
 func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Nil, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
+	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to update record: " + err.Error())
@@ -149,11 +149,11 @@ func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Ni
 	return &proto.Nil{}, nil
 }
 
-// Deletes an album from the database, uses alb.ID to determine which record is deleted
+// Deletes an album from the database, uses alb.Id to determine which record is deleted
 func (s *Server) Delete(ctx context.Context, alb *proto.Album) (*proto.Nil, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.ID)
+	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to delete record: " + err.Error())

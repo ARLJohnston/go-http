@@ -183,7 +183,7 @@ func TestUpdateFailsWhenNoDB(t *testing.T) {
 		WithArgs("Title", "Artist", 5.0, "Cover", 0).
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := proto.Album{ID: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()
@@ -214,7 +214,7 @@ func TestDeleteFailsWhenNoDB(t *testing.T) {
 		WithArgs(0).
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := proto.Album{ID: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()

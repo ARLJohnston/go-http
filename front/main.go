@@ -89,7 +89,7 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 				}
 
 				data <- Album{
-					ID:     resp.ID,
+					ID:     resp.Id,
 					Title:  resp.Title,
 					Artist: resp.Artist,
 					Price:  resp.Price,

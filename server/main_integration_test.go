@@ -30,7 +30,7 @@ var (
 )
 
 func TestGrpcCreate(t *testing.T) {
-	record := proto.Album{ID: 0, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
+	record := proto.Album{Id: 0, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -112,14 +112,14 @@ func TestGrpcRead(t *testing.T) {
 }
 
 func TestGrpcUpdate(t *testing.T) {
-	record := proto.Album{ID: 101, Artist: "Old", Title: "Record", Cover: "Cover", Price: 0}
+	record := proto.Album{Id: 101, Artist: "Old", Title: "Record", Cover: "Cover", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
 		t.Errorf("Unable to create record: %v", err)
 	}
 
-	newRecord := proto.Album{ID: id.Id, Artist: "New", Title: "Record", Cover: "Cover"}
+	newRecord := proto.Album{Id: id.Id, Artist: "New", Title: "Record", Cover: "Cover"}
 	req := proto.UpdateRequest{OldAlbum: &record, NewAlbum: &newRecord}
 
 	_, err = client.Update(ctx, &req)
@@ -129,7 +129,7 @@ func TestGrpcUpdate(t *testing.T) {
 }
 
 func TestGrpcDelete(t *testing.T) {
-	record := proto.Album{ID: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Price: 0}
+	record := proto.Album{Id: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -138,7 +138,7 @@ func TestGrpcDelete(t *testing.T) {
 	if id == nil {
 		t.Errorf("Create did not return an identifier")
 	}
-	record.ID = id.Id
+	record.Id = id.Id
 
 	_, err = client.Delete(ctx, &record)
 	if err != nil {
@@ -166,7 +166,7 @@ func TestGrpcDelete(t *testing.T) {
 				return
 			}
 
-			if resp.ID == id.Id {
+			if resp.Id == id.Id {
 				found = true
 				done <- true
 				return
