@@ -1,3 +1,4 @@
+// Package main implements a gRPC server for interaction with a MYSQL database
 package main
 
 import (
@@ -20,11 +21,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ARLJohnston/go-http/pb"
+	"github.com/ARLJohnston/go-http/proto"
 )
 
 var (
-	db *sql.DB
+	db *sql.DB // Handle to the database
 
 	opsStarted = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "database_client_started_ops_total",
@@ -40,7 +41,8 @@ var (
 	})
 )
 
-func parseEnv(key, fallback string) string {
+// Returns value of environment variable if it is set, otherwise returns fallback
+func ParseEnv(key, fallback string) string {
 	value, ok := os.LookupEnv(key)
 	if !ok {
 		return fallback
@@ -52,6 +54,7 @@ type Server struct {
 	pb.UnimplementedAlbumsServer
 }
 
+// Creates an Album alb in the db, returns the SQL identifier for that album in the database
 func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
 	opsStarted.Inc()
 
@@ -77,6 +80,7 @@ func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 	return &pb.Identifier{Id: id}, nil
 }
 
+// Opens stream for a streaming read of every album in the database
 func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	opsStarted.Inc()
 
@@ -127,6 +131,7 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	return nil
 }
 
+// Given an UpdateRequest in, updates in.OldAlbum to be in.NewAlbum without altering the ID
 func (s *Server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
 	opsStarted.Inc()
 
@@ -144,6 +149,7 @@ func (s *Server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, err
 	return &pb.Nil{}, nil
 }
 
+// Deletes an album from the database, uses alb.ID to determine which record is deleted
 func (s *Server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	opsStarted.Inc()
 
@@ -161,8 +167,9 @@ func (s *Server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	return &pb.Nil{}, nil
 }
 
+// Starts a gRPC server for MYSQL database management
 func main() {
-	target := parseEnv("TARGET_ADDRESS", ":50051")
+	target := ParseEnv("TARGET_ADDRESS", ":50051")
 	listener, err := net.Listen("tcp", target)
 	if err != nil {
 		log.Fatalln("Failed to create tcp listener", err)
@@ -176,11 +183,11 @@ func main() {
 	reflection.Register(s)
 
 	cfg := mysql.Config{
-		User:   parseEnv("MYSQL_USER", "root"),
-		Passwd: parseEnv("MYSQL_PASSWORD", "password"),
-		Net:    parseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
-		Addr:   parseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
-		DBName: parseEnv("MYSQL_DATABASE_NAME", "album"),
+		User:   ParseEnv("MYSQL_USER", "root"),
+		Passwd: ParseEnv("MYSQL_PASSWORD", "password"),
+		Net:    ParseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
+		Addr:   ParseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
+		DBName: ParseEnv("MYSQL_DATABASE_NAME", "album"),
 	}
 
 	db, err = sql.Open("mysql", cfg.FormatDSN())

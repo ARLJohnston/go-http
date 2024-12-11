@@ -1,4 +1,4 @@
-module server
+module github.com/ARLJohnston/go-http/server
 
 go 1.23.2
 

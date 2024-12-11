@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package album;
 
-option go_package = "github.com/ARLJohnston/go-http/pb";
+option go_package = "github.com/ARLJohnston/go-http/proto";
 
 service Albums {
 	rpc Create(Album) returns (Identifier) {}

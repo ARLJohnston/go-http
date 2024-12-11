@@ -4,7 +4,7 @@
 // - protoc             v5.28.2
 // source: album.proto
 
-package pb
+package proto
 
 import (
 	context "context"

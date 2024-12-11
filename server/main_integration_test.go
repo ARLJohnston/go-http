@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ARLJohnston/go-http/pb"
+	"github.com/ARLJohnston/go-http/proto"
 	msql "github.com/go-sql-driver/mysql"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
 	"google.golang.org/grpc"
@@ -181,7 +181,7 @@ func TestGrpcDelete(t *testing.T) {
 }
 
 func TestParseEnvFallback(t *testing.T) {
-	got := parseEnv("veryspecific", "fallback")
+	got := ParseEnv("veryspecific", "fallback")
 	want := "fallback"
 
 	if got != want {
@@ -191,7 +191,7 @@ func TestParseEnvFallback(t *testing.T) {
 
 func TestParseEnv(t *testing.T) {
 	os.Setenv("env", "val")
-	got := parseEnv("env", "fallback")
+	got := ParseEnv("env", "fallback")
 	want := "val"
 
 	if got != want {

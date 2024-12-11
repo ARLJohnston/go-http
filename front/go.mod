@@ -1,4 +1,4 @@
-module front
+module github.com/ARLJohnston/go-http/front
 
 go 1.23.2
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ARLJohnston/go-http/pb"
+	"github.com/ARLJohnston/go-http/proto"
 	"github.com/DATA-DOG/go-sqlmock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
