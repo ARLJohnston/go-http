@@ -30,7 +30,7 @@ type Album struct {
 }
 
 var (
-	target string          // Where gRPC client to dataase is located
+	target string             // Where gRPC client to dataase is located
 	client proto.AlbumsClient // Active gRPC connection to the client
 
 	pageLoads = promauto.NewCounter(prometheus.CounterOpts{

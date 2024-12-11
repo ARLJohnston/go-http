@@ -4,7 +4,6 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    templ.url = "gitub:a-h/templ";
   };
 
   outputs = inputs@{ self, nixpkgs }:
@@ -19,9 +18,6 @@
         inherit system;
       });
 
-      nixpkgs.overlays = [
-        inputs.templ.overlays.default
-      ];
   in {
     devShell = forAllSystems (system:
     let pkgs = nixpkgsFor.${system};
@@ -42,7 +38,7 @@
         protobuf
         protoc-gen-go
         protoc-gen-go-grpc
-        (templ system)
+        templ
       ];
       CGO_ENABLED="0";
       NIX_HARDENING_ENABLE=""; # Fix delve issue
