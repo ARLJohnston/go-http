@@ -31,7 +31,7 @@ type Album struct {
 
 var (
 	target string          // Where gRPC client to dataase is located
-	client pb.AlbumsClient // Active gRPC connection to the client
+	client proto.AlbumsClient // Active gRPC connection to the client
 
 	pageLoads = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "front_end_page_loads_total",
@@ -60,9 +60,9 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 		templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
 		return
 	}
-	client = pb.NewAlbumsClient(conn)
+	client = proto.NewAlbumsClient(conn)
 
-	stream, err := client.Read(context.Background(), &pb.Nil{})
+	stream, err := client.Read(context.Background(), &proto.Nil{})
 	if err != nil {
 		component := unavailable(err.Error())
 		templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)

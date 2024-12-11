@@ -51,11 +51,11 @@ func ParseEnv(key, fallback string) string {
 }
 
 type Server struct {
-	pb.UnimplementedAlbumsServer
+	proto.UnimplementedAlbumsServer
 }
 
 // Creates an Album alb in the db, returns the SQL identifier for that album in the database
-func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, error) {
+func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifier, error) {
 	opsStarted.Inc()
 
 	result, err := db.Exec("INSERT INTO album (title, artist, price, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Price, alb.Cover)
@@ -77,11 +77,11 @@ func (s *Server) Create(ctx context.Context, alb *pb.Album) (*pb.Identifier, err
 	}
 
 	opsSucceeded.Inc()
-	return &pb.Identifier{Id: id}, nil
+	return &proto.Identifier{Id: id}, nil
 }
 
 // Opens stream for a streaming read of every album in the database
-func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
+func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 	opsStarted.Inc()
 
 	rows, err := db.Query("SELECT * FROM album")
@@ -95,7 +95,7 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 	}
 
 	for rows.Next() {
-		var alb pb.Album
+		var alb proto.Album
 		err = rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
 
 		if err != nil {
@@ -132,7 +132,7 @@ func (s *Server) Read(_ *pb.Nil, stream pb.Albums_ReadServer) error {
 }
 
 // Given an UpdateRequest in, updates in.OldAlbum to be in.NewAlbum without altering the ID
-func (s *Server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, error) {
+func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Nil, error) {
 	opsStarted.Inc()
 
 	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.ID)
@@ -146,11 +146,11 @@ func (s *Server) Update(ctx context.Context, in *pb.UpdateRequest) (*pb.Nil, err
 	}
 
 	opsSucceeded.Inc()
-	return &pb.Nil{}, nil
+	return &proto.Nil{}, nil
 }
 
 // Deletes an album from the database, uses alb.ID to determine which record is deleted
-func (s *Server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
+func (s *Server) Delete(ctx context.Context, alb *proto.Album) (*proto.Nil, error) {
 	opsStarted.Inc()
 
 	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.ID)
@@ -164,7 +164,7 @@ func (s *Server) Delete(ctx context.Context, alb *pb.Album) (*pb.Nil, error) {
 	}
 
 	opsSucceeded.Inc()
-	return &pb.Nil{}, nil
+	return &proto.Nil{}, nil
 }
 
 // Starts a gRPC server for MYSQL database management
@@ -196,7 +196,7 @@ func main() {
 	}
 	defer db.Close()
 
-	pb.RegisterAlbumsServer(s, &Server{})
+	proto.RegisterAlbumsServer(s, &Server{})
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalln("Failed to serve gRPC Server", err)

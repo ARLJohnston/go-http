@@ -23,7 +23,7 @@ func TestCreateFailWhenNoDB(t *testing.T) {
 		WithArgs("Title", "Artist", 5.0, "Cover").
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := pb.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()
@@ -60,7 +60,7 @@ func TestCreateFailWhenNoIdentifier(t *testing.T) {
 	s := &Server{}
 	ctx := context.Background()
 
-	album := pb.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	id, err := s.Create(ctx, &album)
 	if id != nil {
@@ -91,9 +91,9 @@ func TestReadFailNoDB(t *testing.T) {
 	mock.ExpectQuery("SELECT +").
 		WillReturnError(fmt.Errorf("mock error"))
 
-	var stream pb.Albums_ReadServer
+	var stream proto.Albums_ReadServer
 
-	err = s.Read(&pb.Nil{}, stream)
+	err = s.Read(&proto.Nil{}, stream)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
@@ -122,9 +122,9 @@ func TestReadFailsWhenInvalidRow(t *testing.T) {
 	mock.ExpectQuery("SELECT +").
 		WillReturnRows(rows)
 
-	var stream pb.Albums_ReadServer
+	var stream proto.Albums_ReadServer
 
-	err = s.Read(&pb.Nil{}, stream)
+	err = s.Read(&proto.Nil{}, stream)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
@@ -155,9 +155,9 @@ func TestReadFailsWhenUnableToReadRow(t *testing.T) {
 	mock.ExpectQuery("SELECT +").
 		WillReturnRows(rows)
 
-	var stream pb.Albums_ReadServer
+	var stream proto.Albums_ReadServer
 
-	err = s.Read(&pb.Nil{}, stream)
+	err = s.Read(&proto.Nil{}, stream)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
@@ -183,12 +183,12 @@ func TestUpdateFailsWhenNoDB(t *testing.T) {
 		WithArgs("Title", "Artist", 5.0, "Cover", 0).
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := pb.Album{ID: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{ID: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()
 
-	_, err = s.Update(ctx, &pb.UpdateRequest{OldAlbum: &album, NewAlbum: &album})
+	_, err = s.Update(ctx, &proto.UpdateRequest{OldAlbum: &album, NewAlbum: &album})
 
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
@@ -214,7 +214,7 @@ func TestDeleteFailsWhenNoDB(t *testing.T) {
 		WithArgs(0).
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := pb.Album{ID: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{ID: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()

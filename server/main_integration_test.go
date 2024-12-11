@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	client pb.AlbumsClient
+	client proto.AlbumsClient
 	ctx    context.Context
 	cfg    msql.Config = msql.Config{
 		User:   "root",
@@ -30,7 +30,7 @@ var (
 )
 
 func TestGrpcCreate(t *testing.T) {
-	record := pb.Album{ID: 0, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
+	record := proto.Album{ID: 0, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -40,7 +40,7 @@ func TestGrpcCreate(t *testing.T) {
 		t.Errorf("Create did not return an identifier")
 	}
 
-	stream, err := client.Read(ctx, &pb.Nil{})
+	stream, err := client.Read(ctx, &proto.Nil{})
 	if err != nil {
 		t.Errorf("Failed to read: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestGrpcCreate(t *testing.T) {
 }
 
 func TestGrpcRead(t *testing.T) {
-	stream, err := client.Read(ctx, &pb.Nil{})
+	stream, err := client.Read(ctx, &proto.Nil{})
 	if err != nil {
 		t.Errorf("Failed to read: %v", err)
 	}
@@ -112,15 +112,15 @@ func TestGrpcRead(t *testing.T) {
 }
 
 func TestGrpcUpdate(t *testing.T) {
-	record := pb.Album{ID: 101, Artist: "Old", Title: "Record", Cover: "Cover", Price: 0}
+	record := proto.Album{ID: 101, Artist: "Old", Title: "Record", Cover: "Cover", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
 		t.Errorf("Unable to create record: %v", err)
 	}
 
-	newRecord := pb.Album{ID: id.Id, Artist: "New", Title: "Record", Cover: "Cover"}
-	req := pb.UpdateRequest{OldAlbum: &record, NewAlbum: &newRecord}
+	newRecord := proto.Album{ID: id.Id, Artist: "New", Title: "Record", Cover: "Cover"}
+	req := proto.UpdateRequest{OldAlbum: &record, NewAlbum: &newRecord}
 
 	_, err = client.Update(ctx, &req)
 	if err != nil {
@@ -129,7 +129,7 @@ func TestGrpcUpdate(t *testing.T) {
 }
 
 func TestGrpcDelete(t *testing.T) {
-	record := pb.Album{ID: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Price: 0}
+	record := proto.Album{ID: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Price: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -145,7 +145,7 @@ func TestGrpcDelete(t *testing.T) {
 		t.Errorf("Unable to delete record: %v", err)
 	}
 
-	stream, err := client.Read(ctx, &pb.Nil{})
+	stream, err := client.Read(ctx, &proto.Nil{})
 	if err != nil {
 		t.Errorf("Failed to read: %v", err)
 	}
@@ -239,12 +239,12 @@ func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
 	return mysqlC, port.Port()
 }
 
-func StartServer(ctx context.Context) (pb.AlbumsClient, func()) {
+func StartServer(ctx context.Context) (proto.AlbumsClient, func()) {
 	buf := 1024 * 1024
 	listener := bufconn.Listen(buf)
 
 	s := grpc.NewServer()
-	pb.RegisterAlbumsServer(s, &Server{})
+	proto.RegisterAlbumsServer(s, &Server{})
 	go func() {
 		err := s.Serve(listener)
 		if err != nil {
@@ -257,7 +257,7 @@ func StartServer(ctx context.Context) (pb.AlbumsClient, func()) {
 			return listener.Dial()
 		}), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	client := pb.NewAlbumsClient(conn)
+	client := proto.NewAlbumsClient(conn)
 
 	return client, s.Stop
 }
