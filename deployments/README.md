@@ -34,7 +34,24 @@ helmfile init
 
 To sync Kubernetes to the desired state:
 ```console
-helmfile apply
+helmfile apply -f kubernetes.yaml
+```
+
+To purge:
+```console
+helmfile purge
+```
+
+
+## Service mesh (via Helm)
+To install dependencies:
+```console
+helmfile init
+```
+
+To sync the service mesh to the desired state:
+```console
+helmfile apply -f servicemesh.yaml
 ```
 
 To purge:
