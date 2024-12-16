@@ -22,15 +22,15 @@ import (
 
 // Representation of an Album
 type Album struct {
-	ID     int64   // SQL Identifier
-	Title  string  // Album title
-	Artist string  // Album artist
-	Price  float32 // Price of the album
-	Cover  string  // Link to image of the cover
+	Id     int    // SQL Identifier
+	Title  string // Album title
+	Artist string // Album artist
+	Score  int
+	Cover  string // Link to image of the cover
 }
 
 var (
-	target string             // Where gRPC client to dataase is located
+	target string             // Where gRPC client to database is located
 	client proto.AlbumsClient // Active gRPC connection to the client
 
 	pageLoads = promauto.NewCounter(prometheus.CounterOpts{
@@ -89,16 +89,16 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 				}
 
 				data <- Album{
-					ID:     resp.Id,
+					Id:     resp.Id,
 					Title:  resp.Title,
 					Artist: resp.Artist,
-					Price:  resp.Price,
+					Score:  resp.Score,
 					Cover:  resp.Cover,
 				}
 			}
 		}()
 
-		<-done //we will wait until all response is received
+		<-done
 		databaseLoads.Inc()
 	}()
 	component := grid(data)
@@ -108,7 +108,17 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 
 // Content of buttons in grid
 func post(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "This was clicked")
+	r.ParseForm()
+
+	if r.Form.Has("up") {
+		fmt.Fprintf(w, "Updoot")
+		fmt.Println("Updoot")
+	}
+
+	if r.Form.Has("down") {
+		fmt.Fprintf(w, "Downdoot")
+		fmt.Println("Downdoot")
+	}
 }
 
 // Starts http server with appropriate routes

@@ -1,54 +1,62 @@
 package main
 
+import "strconv"
+
 css gridcontainer() {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  padding: 10px;
+	display: grid;
+	grid-template-columns: auto auto auto;
+	padding: 10px;
 }
 
 css griditem() {
-  border: 1px solid rgba(0, 0, 0, 0.8);
-  padding: 20px;
-  font-size: 30px;
-  text-align: center;
+	border: 1px solid rgba(0, 0, 0, 0.8);
+	padding: 20px;
+	font-size: 30px;
+	text-align: center;
 }
 
-templ Page(){
-			<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<title>App</title>
-				<meta charset="UTF-8"/>
-  			<script src="https://unpkg.com/htmx.org@2.0.3"></script>
-			</head>
-			<body>
+templ Page() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<title>App</title>
+			<meta charset="UTF-8"/>
+			<script src="https://unpkg.com/htmx.org@2.0.3"></script>
+		</head>
+		<body>
 			{ children... }
-			</body>
-			</html>
+		</body>
+	</html>
 }
 
-templ grid(albums chan Album){
-			@Page(){
-				<div class={ gridcontainer() }>
-								for alb := range albums {
-												@templ.Flush() {
-												<div class={ griditem }>
-				<img src={ alb.Cover } alt={ alb.Title } style="width:250px;height:250px;"/>
-								<p>{ alb.Title } - { alb.Artist }</p>
-								<p>
-  <button hx-post="/post" hx-swap="outerHTML">
-    Click Me
-  </button>
-	</p>
-												</div>
-								}
-								}
-				</div>
+templ album(alb Album) {
+	<div class={ griditem }>
+		<img src={ alb.Cover } alt={ alb.Title } style="width:250px;height:250px;"/>
+		<p>{ alb.Title } - { alb.Artist }</p>
+		<form id="update" action="/post" method="POST" hx-post="/post" hx-select="#update" hx-swap="outerHTML">
+				<div>
+				<button class="button is-primary" type="submit" name="up" value={strconv.Itoa(int(alb.Id))}>+1</button>
+				{ strconv.Itoa(int(alb.Score)) }
+
+				<button class="button is-primary" type="submit" name="down" value={strconv.Itoa(int(alb.Id))}>-1</button></div>
+		</form>
+	</div>
+}
+
+templ grid(albums chan Album) {
+	@Page() {
+		<div class={ gridcontainer() }>
+			for alb := range albums {
+				@templ.Flush() {
+				  @album(alb)
+				}
 			}
+		</div>
+	}
 }
 
 templ unavailable(msg string) {
-			@Page(){
-				<p>Unable to connect to database: { msg }</p>
-			}
+	@Page() {
+		<p>Unable to connect to database: { msg }</p>
+	}
 }

@@ -58,7 +58,7 @@ type Server struct {
 func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifier, error) {
 	opsStarted.Inc()
 
-	result, err := db.Exec("INSERT INTO album (title, artist, price, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Price, alb.Cover)
+	result, err := db.Exec("INSERT INTO album (title, artist, score, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Score, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Create failed:" + err.Error())
@@ -96,7 +96,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 
 	for rows.Next() {
 		var alb proto.Album
-		err = rows.Scan(&alb.Id, &alb.Title, &alb.Artist, &alb.Price, &alb.Cover)
+		err = rows.Scan(&alb.Id, &alb.Title, &alb.Artist, &alb.Score, &alb.Cover)
 
 		if err != nil {
 			opsFailed.Inc()
@@ -135,7 +135,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Nil, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Price, in.NewAlbum.Cover, in.OldAlbum.Id)
+	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to update record: " + err.Error())

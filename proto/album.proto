@@ -15,7 +15,7 @@ message Album {
   int64 id = 1;
   string title = 2;
   string artist = 3;
-  float price = 4;
+	int64 score = 4;
   string cover = 5;
 }
 
