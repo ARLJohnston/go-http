@@ -135,7 +135,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Nil, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("UPDATE album SET title=?, artist=?, price=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
+	_, err := db.Exec("UPDATE album SET title=?, artist=?, score=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to update record: " + err.Error())

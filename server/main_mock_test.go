@@ -20,7 +20,7 @@ func TestCreateFailWhenNoDB(t *testing.T) {
 	defer data.Close()
 
 	mock.ExpectExec("INSERT INTO album").
-		WithArgs("Title", "Artist", 5.0, "Cover").
+		WithArgs("Title", "Artist", 5, "Cover").
 		WillReturnError(fmt.Errorf("mock error"))
 
 	album := proto.Album{Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
@@ -54,7 +54,7 @@ func TestCreateFailWhenNoIdentifier(t *testing.T) {
 	defer data.Close()
 
 	mock.ExpectExec("INSERT INTO album").
-		WithArgs("Title", "Artist", 5.0, "Cover").
+		WithArgs("Title", "Artist", 5, "Cover").
 		WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("mock error")))
 
 	s := &Server{}
@@ -180,7 +180,7 @@ func TestUpdateFailsWhenNoDB(t *testing.T) {
 	defer data.Close()
 
 	mock.ExpectExec("UPDATE album SET").
-		WithArgs("Title", "Artist", 5.0, "Cover", 0).
+		WithArgs("Title", "Artist", 5, "Cover", 0).
 		WillReturnError(fmt.Errorf("mock error"))
 
 	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
