@@ -23,7 +23,7 @@ func TestCreateFailWhenNoDB(t *testing.T) {
 		WithArgs("Title", "Artist", 5.0, "Cover").
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := proto.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()
@@ -60,7 +60,7 @@ func TestCreateFailWhenNoIdentifier(t *testing.T) {
 	s := &Server{}
 	ctx := context.Background()
 
-	album := proto.Album{Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
 	id, err := s.Create(ctx, &album)
 	if id != nil {
@@ -147,9 +147,9 @@ func TestReadFailsWhenUnableToReadRow(t *testing.T) {
 	defer data.Close()
 	s := &Server{}
 
-	rows := sqlmock.NewRows([]string{"id", "Title", "Artist", "Price", "Cover"}).
-		AddRow(0, "Title", "Artist", 9.99, "cover").
-		AddRow(1, "Title", "Artist", 9.99, "cover").
+	rows := sqlmock.NewRows([]string{"id", "Title", "Artist", "Score", "Cover"}).
+		AddRow(0, "Title", "Artist", 9, "cover").
+		AddRow(1, "Title", "Artist", 9, "cover").
 		RowError(0, fmt.Errorf("mock error")) //Need to error on first row as stream doesn't exist
 
 	mock.ExpectQuery("SELECT +").
@@ -183,7 +183,7 @@ func TestUpdateFailsWhenNoDB(t *testing.T) {
 		WithArgs("Title", "Artist", 5.0, "Cover", 0).
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()
@@ -214,7 +214,7 @@ func TestDeleteFailsWhenNoDB(t *testing.T) {
 		WithArgs(0).
 		WillReturnError(fmt.Errorf("mock error"))
 
-	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Price: 5.0, Cover: "Cover"}
+	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
 	s := &Server{}
 	ctx := context.Background()

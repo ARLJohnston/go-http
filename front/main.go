@@ -22,10 +22,10 @@ import (
 
 // Representation of an Album
 type Album struct {
-	Id     int    // SQL Identifier
+	Id     int64  // SQL Identifier
 	Title  string // Album title
 	Artist string // Album artist
-	Score  int
+	Score  int64  // Upvotes
 	Cover  string // Link to image of the cover
 }
 

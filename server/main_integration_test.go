@@ -30,7 +30,7 @@ var (
 )
 
 func TestGrpcCreate(t *testing.T) {
-	record := proto.Album{Id: 0, Artist: "Create", Title: "Record", Cover: "Cover", Price: 0}
+	record := proto.Album{Id: 0, Artist: "Create", Title: "Record", Cover: "Cover", Score: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -112,7 +112,7 @@ func TestGrpcRead(t *testing.T) {
 }
 
 func TestGrpcUpdate(t *testing.T) {
-	record := proto.Album{Id: 101, Artist: "Old", Title: "Record", Cover: "Cover", Price: 0}
+	record := proto.Album{Id: 101, Artist: "Old", Title: "Record", Cover: "Cover", Score: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
@@ -129,7 +129,7 @@ func TestGrpcUpdate(t *testing.T) {
 }
 
 func TestGrpcDelete(t *testing.T) {
-	record := proto.Album{Id: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Price: 0}
+	record := proto.Album{Id: 0, Artist: "DeleteMe", Title: "DeleteMe", Cover: "DeleteMe", Score: 0}
 
 	id, err := client.Create(ctx, &record)
 	if err != nil {
