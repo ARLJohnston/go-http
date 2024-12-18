@@ -40,7 +40,6 @@ services:
       MYSQL_USER: dbuser
       MYSQL_PASSWORD: userpass
       MYSQL_DATABASE: album
-      MAX_USER_CONNECTIONS: 0 #https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_user_connections
     restart: "unless-stopped"
     networks:
       - back-end
