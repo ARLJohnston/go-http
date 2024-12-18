@@ -19,10 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Albums_Create_FullMethodName = "/album.Albums/Create"
-	Albums_Read_FullMethodName   = "/album.Albums/Read"
-	Albums_Update_FullMethodName = "/album.Albums/Update"
-	Albums_Delete_FullMethodName = "/album.Albums/Delete"
+	Albums_Create_FullMethodName    = "/album.Albums/Create"
+	Albums_Read_FullMethodName      = "/album.Albums/Read"
+	Albums_Update_FullMethodName    = "/album.Albums/Update"
+	Albums_Delete_FullMethodName    = "/album.Albums/Delete"
+	Albums_Increment_FullMethodName = "/album.Albums/Increment"
+	Albums_Decrement_FullMethodName = "/album.Albums/Decrement"
 )
 
 // AlbumsClient is the client API for Albums service.
@@ -33,6 +35,8 @@ type AlbumsClient interface {
 	Read(ctx context.Context, in *Nil, opts ...grpc.CallOption) (Albums_ReadClient, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*Nil, error)
 	Delete(ctx context.Context, in *Album, opts ...grpc.CallOption) (*Nil, error)
+	Increment(ctx context.Context, in *Identifier, opts ...grpc.CallOption) (*Score, error)
+	Decrement(ctx context.Context, in *Identifier, opts ...grpc.CallOption) (*Score, error)
 }
 
 type albumsClient struct {
@@ -102,6 +106,24 @@ func (c *albumsClient) Delete(ctx context.Context, in *Album, opts ...grpc.CallO
 	return out, nil
 }
 
+func (c *albumsClient) Increment(ctx context.Context, in *Identifier, opts ...grpc.CallOption) (*Score, error) {
+	out := new(Score)
+	err := c.cc.Invoke(ctx, Albums_Increment_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *albumsClient) Decrement(ctx context.Context, in *Identifier, opts ...grpc.CallOption) (*Score, error) {
+	out := new(Score)
+	err := c.cc.Invoke(ctx, Albums_Decrement_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AlbumsServer is the server API for Albums service.
 // All implementations must embed UnimplementedAlbumsServer
 // for forward compatibility
@@ -110,6 +132,8 @@ type AlbumsServer interface {
 	Read(*Nil, Albums_ReadServer) error
 	Update(context.Context, *UpdateRequest) (*Nil, error)
 	Delete(context.Context, *Album) (*Nil, error)
+	Increment(context.Context, *Identifier) (*Score, error)
+	Decrement(context.Context, *Identifier) (*Score, error)
 	mustEmbedUnimplementedAlbumsServer()
 }
 
@@ -128,6 +152,12 @@ func (UnimplementedAlbumsServer) Update(context.Context, *UpdateRequest) (*Nil, 
 }
 func (UnimplementedAlbumsServer) Delete(context.Context, *Album) (*Nil, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedAlbumsServer) Increment(context.Context, *Identifier) (*Score, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Increment not implemented")
+}
+func (UnimplementedAlbumsServer) Decrement(context.Context, *Identifier) (*Score, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Decrement not implemented")
 }
 func (UnimplementedAlbumsServer) mustEmbedUnimplementedAlbumsServer() {}
 
@@ -217,6 +247,42 @@ func _Albums_Delete_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Albums_Increment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Identifier)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AlbumsServer).Increment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Albums_Increment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AlbumsServer).Increment(ctx, req.(*Identifier))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Albums_Decrement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Identifier)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AlbumsServer).Decrement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Albums_Decrement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AlbumsServer).Decrement(ctx, req.(*Identifier))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Albums_ServiceDesc is the grpc.ServiceDesc for Albums service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -235,6 +301,14 @@ var Albums_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _Albums_Delete_Handler,
+		},
+		{
+			MethodName: "Increment",
+			Handler:    _Albums_Increment_Handler,
+		},
+		{
+			MethodName: "Decrement",
+			Handler:    _Albums_Decrement_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -9,6 +9,8 @@ service Albums {
 	rpc Read(Nil) returns (stream Album) {}
 	rpc Update(UpdateRequest) returns (Nil) {}
 	rpc Delete(Album) returns (Nil) {}
+	rpc Increment(Identifier) returns (Score) {}
+	rpc Decrement(Identifier) returns (Score) {}
 }
 
 message Album {
@@ -23,10 +25,15 @@ message Identifier {
 	int64 id = 1;
 }
 
+message Score {
+	int64 score = 1;
+}
+
 message UpdateRequest {
 	Album oldAlbum = 1;
 	Album newAlbum = 2;
 }
+
 
 message Nil {
 }

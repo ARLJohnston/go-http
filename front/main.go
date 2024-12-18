@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/a-h/templ"
 
@@ -109,14 +110,35 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 // Content of buttons in grid
 func post(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
+	fmt.Println(r.Form["up"])
 
 	if r.Form.Has("up") {
-		fmt.Fprintf(w, "Updoot")
+		id, err := strconv.Atoi(r.Form["up"][0])
+		if err != nil {
+			log.Printf("unable to decode id %v", err)
+			return
+		}
+		score, err := client.Increment(context.Background(), &proto.Identifier{Id: int64(id)})
+		if err != nil {
+			log.Printf("cannot receive %v", err)
+			return
+		}
+		fmt.Fprintf(w, string(score.Score))
 		fmt.Println("Updoot")
 	}
 
 	if r.Form.Has("down") {
-		fmt.Fprintf(w, "Downdoot")
+		id, err := strconv.Atoi(r.Form["down"][0])
+		if err != nil {
+			log.Printf("unable to decode id %v", err)
+			return
+		}
+		score, err := client.Decrement(context.Background(), &proto.Identifier{Id: int64(id)})
+		if err != nil {
+			log.Printf("cannot receive %v", err)
+			return
+		}
+		fmt.Fprintf(w, string(score.Score))
 		fmt.Println("Downdoot")
 	}
 }

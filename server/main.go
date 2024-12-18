@@ -167,6 +167,62 @@ func (s *Server) Delete(ctx context.Context, alb *proto.Album) (*proto.Nil, erro
 	return &proto.Nil{}, nil
 }
 
+func (s *Server) Increment(ctx context.Context, in *proto.Identifier) (*proto.Score, error) {
+	opsStarted.Inc()
+
+	_, err := db.Exec("UPDATE album SET score = score + 1 WHERE id=?", in.Id)
+	if err != nil {
+		opsFailed.Inc()
+		log.Println("Unable to increment score: " + err.Error())
+		return nil, status.Error(
+			codes.Unknown,
+			"Unable to increment score: "+err.Error(),
+		)
+	}
+
+	var score int
+	err = db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
+	if err != nil {
+		opsFailed.Inc()
+		log.Println("Unable to retrieve score: " + err.Error())
+		return nil, status.Error(
+			codes.Unknown,
+			"Unable to retrieve score: "+err.Error(),
+		)
+	}
+
+	opsSucceeded.Inc()
+	return &proto.Score{Score: int64(score)}, nil
+}
+
+func (s *Server) Decrement(ctx context.Context, in *proto.Identifier) (*proto.Score, error) {
+	opsStarted.Inc()
+
+	_, err := db.Exec("UPDATE album SET score = score - 1 WHERE id=?", in.Id)
+	if err != nil {
+		opsFailed.Inc()
+		log.Println("Unable to decrement score: " + err.Error())
+		return nil, status.Error(
+			codes.Unknown,
+			"Unable to decrement score: "+err.Error(),
+		)
+	}
+
+	var score int
+	err = db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
+	if err != nil {
+		opsFailed.Inc()
+		log.Println("Unable to retrieve score: " + err.Error())
+		return nil, status.Error(
+			codes.Unknown,
+			"Unable to retrieve score: "+err.Error(),
+		)
+	}
+
+	opsSucceeded.Inc()
+	return &proto.Score{Score: int64(score)}, nil
+}
+
 // Starts a gRPC server for MYSQL database management
 func main() {
 	target := ParseEnv("TARGET_ADDRESS", ":50051")
