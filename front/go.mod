@@ -3,7 +3,7 @@ module github.com/ARLJohnston/go-http/front
 go 1.23.3
 
 require (
-	github.com/ARLJohnston/go-http/proto v0.0.0-20241211160459-76788906f32d
+	github.com/ARLJohnston/go-http/proto v0.0.0-20241216215807-d6e25e12b32f
 	github.com/a-h/templ v0.2.793
 	github.com/prometheus/client_golang v1.20.5
 	google.golang.org/grpc v1.68.1
