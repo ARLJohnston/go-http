@@ -1,5 +1,5 @@
 # Scripts
-## K6
+## Load testing with k6
 Requires [xk6](https://github.com/grafana/xk6) and [xk6 faker](https://github.com/grafana/xk6-faker)
 
 ```console
@@ -14,3 +14,5 @@ To configure number of virtual users and run duration:
 ```console
 ./k6 run --no-usage-report --duration <Duration> --vus <Num VUs> script.js
 ```
+
+This will load test the locally-hosted application
