@@ -110,7 +110,6 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 // Content of buttons in grid
 func post(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	fmt.Println(r.Form["up"])
 
 	if r.Form.Has("up") {
 		id, err := strconv.Atoi(r.Form["up"][0])
@@ -123,8 +122,9 @@ func post(w http.ResponseWriter, r *http.Request) {
 			log.Printf("cannot receive %v", err)
 			return
 		}
-		fmt.Fprintf(w, string(score.Score))
-		fmt.Println("Updoot")
+
+		component := scoring(id, int(score.Score))
+		templ.Handler(component).ServeHTTP(w, r)
 	}
 
 	if r.Form.Has("down") {
@@ -138,8 +138,9 @@ func post(w http.ResponseWriter, r *http.Request) {
 			log.Printf("cannot receive %v", err)
 			return
 		}
-		fmt.Fprintf(w, string(score.Score))
-		fmt.Println("Downdoot")
+
+		component := scoring(id, int(score.Score))
+		templ.Handler(component).ServeHTTP(w, r)
 	}
 }
 

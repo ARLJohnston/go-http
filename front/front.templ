@@ -29,17 +29,21 @@ templ Page() {
 	</html>
 }
 
+templ scoring(id int, count int) {
+		<form id="update" action="/post" method="POST" hx-post="/post" hx-select="#update" hx-swap="outerHTML">
+				<div>
+				<button class="button is-primary" type="submit" name="up" value={strconv.Itoa(id)}>+1</button>
+				{ strconv.Itoa(count) }
+
+				<button class="button is-primary" type="submit" name="down" value={strconv.Itoa(id)}>-1</button></div>
+		</form>
+}
+
 templ album(alb Album) {
 	<div class={ griditem }>
 		<img src={ alb.Cover } alt={ alb.Title } style="width:250px;height:250px;"/>
 		<p>{ alb.Title } - { alb.Artist }</p>
-		<form id="update" action="/post" method="POST" hx-post="/post" hx-select="#update" hx-swap="outerHTML">
-				<div>
-				<button class="button is-primary" type="submit" name="up" value={strconv.Itoa(int(alb.Id))}>+1</button>
-				{ strconv.Itoa(int(alb.Score)) }
-
-				<button class="button is-primary" type="submit" name="down" value={strconv.Itoa(int(alb.Id))}>-1</button></div>
-		</form>
+		@scoring(int(alb.Id),int(alb.Score))
 	</div>
 }
 
