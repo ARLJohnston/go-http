@@ -30,8 +30,6 @@
         gopls
         nixpkgs-fmt
         yaml-language-server
-        opentofu
-        terraform-ls
         nixd
         delve
         dockerfile-language-server-nodejs

@@ -1,5 +1,5 @@
-github.com/ARLJohnston/go-http/proto v0.0.0-20241216215807-d6e25e12b32f h1:zGhAFndIBs4gCt+HE/US/0aAcCbHQ1WgmWu5E2fsj5U=
-github.com/ARLJohnston/go-http/proto v0.0.0-20241216215807-d6e25e12b32f/go.mod h1:ei/wIrKIBcgTZCiaX3qWyB4O54rFFw1l1C92vJugVvg=
+github.com/ARLJohnston/go-http/proto v0.0.0-20241219142827-ba2fc699a44f h1:70adfbLTeiM8BHtuiNbkX+ZcKUxMRR4wq/bU5ZfBHd0=
+github.com/ARLJohnston/go-http/proto v0.0.0-20241219142827-ba2fc699a44f/go.mod h1:ei/wIrKIBcgTZCiaX3qWyB4O54rFFw1l1C92vJugVvg=
 github.com/a-h/templ v0.2.793 h1:Io+/ocnfGWYO4VHdR0zBbf39PQlnzVCVVD+wEEs6/qY=
 github.com/a-h/templ v0.2.793/go.mod h1:lq48JXoUvuQrU0VThrK31yFwdRjTCnIE5bcPCM9IP1w=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
