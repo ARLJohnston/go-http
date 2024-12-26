@@ -206,12 +206,13 @@ func TestMain(m *testing.M) {
 	cfg.Addr = fmt.Sprintf("localhost:%s", port)
 
 	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	var server Server
+	server.db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		panic("Unable to connect to container")
 	}
 
-	cli, stopServer := StartServer(ctx)
+	cli, stopServer := StartServer(ctx, &server)
 	client = cli
 
 	ret := m.Run()
@@ -239,12 +240,12 @@ func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
 	return mysqlC, port.Port()
 }
 
-func StartServer(ctx context.Context) (proto.AlbumsClient, func()) {
+func StartServer(ctx context.Context, server *Server) (proto.AlbumsClient, func()) {
 	buf := 1024 * 1024
 	listener := bufconn.Listen(buf)
 
 	s := grpc.NewServer()
-	proto.RegisterAlbumsServer(s, &Server{})
+	proto.RegisterAlbumsServer(s, server)
 	go func() {
 		err := s.Serve(listener)
 		if err != nil {

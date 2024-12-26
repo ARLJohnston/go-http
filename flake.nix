@@ -37,6 +37,7 @@
         protoc-gen-go
         protoc-gen-go-grpc
         templ
+	helmfile
       ];
       CGO_ENABLED="0";
       NIX_HARDENING_ENABLE=""; # Fix delve issue
