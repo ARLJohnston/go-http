@@ -37,9 +37,9 @@ To sync Kubernetes to the desired state:
 helmfile apply -f kubernetes.yaml
 ```
 
-To purge:
+To [remove](https://helmfile.readthedocs.io/en/latest/#destroy) the deployment from the cluster:
 ```console
-helmfile purge
+helmfile destroy
 ```
 
 
@@ -54,7 +54,7 @@ To sync the service mesh to the desired state:
 helmfile apply -f servicemesh.yaml
 ```
 
-To purge:
+To [remove](https://helmfile.readthedocs.io/en/latest/#destroy) the deployment from the cluster:
 ```console
-helmfile purge
+helmfile destroy
 ```
