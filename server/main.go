@@ -25,8 +25,6 @@ import (
 )
 
 var (
-	db *sql.DB // Handle to the database
-
 	opsStarted = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "database_client_started_ops_total",
 		Help: "The total number of database calls by the gRPC client",
@@ -51,6 +49,7 @@ func ParseEnv(key, fallback string) string {
 }
 
 type Server struct {
+	db *sql.DB // Handle to the database
 	proto.UnimplementedAlbumsServer
 }
 
@@ -58,7 +57,7 @@ type Server struct {
 func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifier, error) {
 	opsStarted.Inc()
 
-	result, err := db.Exec("INSERT INTO album (title, artist, score, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Score, alb.Cover)
+	result, err := s.db.Exec("INSERT INTO album (title, artist, score, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Score, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Create failed:" + err.Error())
@@ -84,7 +83,7 @@ func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifie
 func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 	opsStarted.Inc()
 
-	rows, err := db.Query("SELECT * FROM album")
+	rows, err := s.db.Query("SELECT * FROM album")
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to select: " + err.Error())
@@ -135,7 +134,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Nil, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("UPDATE album SET title=?, artist=?, score=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
+	_, err := s.db.Exec("UPDATE album SET title=?, artist=?, score=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to update record: " + err.Error())
@@ -153,7 +152,7 @@ func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Ni
 func (s *Server) Delete(ctx context.Context, alb *proto.Album) (*proto.Nil, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("DELETE FROM album WHERE id=?", alb.Id)
+	_, err := s.db.Exec("DELETE FROM album WHERE id=?", alb.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to delete record: " + err.Error())
@@ -170,7 +169,7 @@ func (s *Server) Delete(ctx context.Context, alb *proto.Album) (*proto.Nil, erro
 func (s *Server) Increment(ctx context.Context, in *proto.Identifier) (*proto.Score, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("UPDATE album SET score = score + 1 WHERE id=?", in.Id)
+	_, err := s.db.Exec("UPDATE album SET score = score + 1 WHERE id=?", in.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to increment score: " + err.Error())
@@ -181,7 +180,7 @@ func (s *Server) Increment(ctx context.Context, in *proto.Identifier) (*proto.Sc
 	}
 
 	var score int
-	err = db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
+	err = s.db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to retrieve score: " + err.Error())
@@ -198,7 +197,7 @@ func (s *Server) Increment(ctx context.Context, in *proto.Identifier) (*proto.Sc
 func (s *Server) Decrement(ctx context.Context, in *proto.Identifier) (*proto.Score, error) {
 	opsStarted.Inc()
 
-	_, err := db.Exec("UPDATE album SET score = score - 1 WHERE id=?", in.Id)
+	_, err := s.db.Exec("UPDATE album SET score = score - 1 WHERE id=?", in.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to decrement score: " + err.Error())
@@ -209,7 +208,7 @@ func (s *Server) Decrement(ctx context.Context, in *proto.Identifier) (*proto.Sc
 	}
 
 	var score int
-	err = db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
+	err = s.db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to retrieve score: " + err.Error())
@@ -246,11 +245,14 @@ func main() {
 		DBName: ParseEnv("MYSQL_DATABASE_NAME", "album"),
 	}
 
-	db, err = sql.Open("mysql", cfg.FormatDSN())
+	var server Server
+
+	server.db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Fatalln("Failed to connect to database", err)
 	}
-	defer db.Close()
+
+	defer server.db.Close()
 
 	proto.RegisterAlbumsServer(s, &Server{})
 	err = s.Serve(listener)

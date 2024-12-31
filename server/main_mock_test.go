@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -11,13 +12,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestCreateFailWhenNoDB(t *testing.T) {
+func SetupMock(t *testing.T) (mock sqlmock.Sqlmock, data *sql.DB, s *Server) {
 	data, mock, err := sqlmock.New()
-	db = data
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	defer data.Close()
+
+	return mock, data, &Server{db: data}
+}
+
+func TestCreateFailWhenNoDB(t *testing.T) {
+	mock, _, s := SetupMock(t)
 
 	mock.ExpectExec("INSERT INTO album").
 		WithArgs("Title", "Artist", 5, "Cover").
@@ -25,10 +30,7 @@ func TestCreateFailWhenNoDB(t *testing.T) {
 
 	album := proto.Album{Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
-	s := &Server{}
-	ctx := context.Background()
-
-	id, err := s.Create(ctx, &album)
+	id, err := s.Create(context.Background(), &album)
 	if id != nil {
 		t.Errorf("Expected no id to be returned, got %d", id.Id)
 	}
@@ -46,23 +48,16 @@ func TestCreateFailWhenNoDB(t *testing.T) {
 }
 
 func TestCreateFailWhenNoIdentifier(t *testing.T) {
-	data, mock, err := sqlmock.New()
-	db = data
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	mock, data, s := SetupMock(t)
 	defer data.Close()
 
 	mock.ExpectExec("INSERT INTO album").
 		WithArgs("Title", "Artist", 5, "Cover").
 		WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("mock error")))
 
-	s := &Server{}
-	ctx := context.Background()
-
 	album := proto.Album{Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
-	id, err := s.Create(ctx, &album)
+	id, err := s.Create(context.Background(), &album)
 	if id != nil {
 		t.Errorf("Expected no id to be returned, got %d", id.Id)
 	}
@@ -80,20 +75,15 @@ func TestCreateFailWhenNoIdentifier(t *testing.T) {
 }
 
 func TestReadFailNoDB(t *testing.T) {
-	data, mock, err := sqlmock.New()
-	db = data
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	mock, data, s := SetupMock(t)
 	defer data.Close()
-	s := &Server{}
 
 	mock.ExpectQuery("SELECT +").
 		WillReturnError(fmt.Errorf("mock error"))
 
 	var stream proto.Albums_ReadServer
 
-	err = s.Read(&proto.Nil{}, stream)
+	err := s.Read(&proto.Nil{}, stream)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
@@ -108,13 +98,8 @@ func TestReadFailNoDB(t *testing.T) {
 }
 
 func TestReadFailsWhenInvalidRow(t *testing.T) {
-	data, mock, err := sqlmock.New()
-	db = data
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	mock, data, s := SetupMock(t)
 	defer data.Close()
-	s := &Server{}
 
 	rows := sqlmock.NewRows([]string{"Name", "Row"}).
 		AddRow("Invalid", "Row")
@@ -124,7 +109,7 @@ func TestReadFailsWhenInvalidRow(t *testing.T) {
 
 	var stream proto.Albums_ReadServer
 
-	err = s.Read(&proto.Nil{}, stream)
+	err := s.Read(&proto.Nil{}, stream)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
@@ -139,13 +124,8 @@ func TestReadFailsWhenInvalidRow(t *testing.T) {
 }
 
 func TestReadFailsWhenUnableToReadRow(t *testing.T) {
-	data, mock, err := sqlmock.New()
-	db = data
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	mock, data, s := SetupMock(t)
 	defer data.Close()
-	s := &Server{}
 
 	rows := sqlmock.NewRows([]string{"id", "Title", "Artist", "Score", "Cover"}).
 		AddRow(0, "Title", "Artist", 9, "cover").
@@ -157,7 +137,7 @@ func TestReadFailsWhenUnableToReadRow(t *testing.T) {
 
 	var stream proto.Albums_ReadServer
 
-	err = s.Read(&proto.Nil{}, stream)
+	err := s.Read(&proto.Nil{}, stream)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
@@ -172,11 +152,7 @@ func TestReadFailsWhenUnableToReadRow(t *testing.T) {
 }
 
 func TestUpdateFailsWhenNoDB(t *testing.T) {
-	data, mock, err := sqlmock.New()
-	db = data
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	mock, data, s := SetupMock(t)
 	defer data.Close()
 
 	mock.ExpectExec("UPDATE album SET").
@@ -185,10 +161,7 @@ func TestUpdateFailsWhenNoDB(t *testing.T) {
 
 	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
-	s := &Server{}
-	ctx := context.Background()
-
-	_, err = s.Update(ctx, &proto.UpdateRequest{OldAlbum: &album, NewAlbum: &album})
+	_, err := s.Update(context.Background(), &proto.UpdateRequest{OldAlbum: &album, NewAlbum: &album})
 
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
@@ -203,11 +176,7 @@ func TestUpdateFailsWhenNoDB(t *testing.T) {
 }
 
 func TestDeleteFailsWhenNoDB(t *testing.T) {
-	data, mock, err := sqlmock.New()
-	db = data
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	mock, data, s := SetupMock(t)
 	defer data.Close()
 
 	mock.ExpectExec("DELETE FROM album WHERE").
@@ -216,10 +185,7 @@ func TestDeleteFailsWhenNoDB(t *testing.T) {
 
 	album := proto.Album{Id: 0, Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
 
-	s := &Server{}
-	ctx := context.Background()
-
-	_, err = s.Delete(ctx, &album)
+	_, err := s.Delete(ctx, &album)
 	if err == nil {
 		t.Errorf("Expected an err, got nil")
 	}
