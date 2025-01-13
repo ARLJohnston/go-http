@@ -4,7 +4,7 @@ go 1.23.3
 
 require (
 	github.com/ARLJohnston/go-http/proto v0.0.0-20241219142827-ba2fc699a44f
-	github.com/a-h/templ v0.2.793
+	github.com/a-h/templ v0.3.819
 	github.com/prometheus/client_golang v1.20.5
 	google.golang.org/grpc v1.68.1
 )
