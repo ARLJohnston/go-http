@@ -20,7 +20,7 @@ services:
       - db
 
   db:
-    image: mysql:lts
+    image: mysql:9.2.0
     volumes:
       - .:/docker-entrypoint-initdb.d
       - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
@@ -34,7 +34,7 @@ services:
       MYSQL_DATABASE: album
 
   adminer:
-    image: adminer
+    image: adminer:4.8.1-standalone
     ports:
       - 8080:8080
 
@@ -46,7 +46,7 @@ services:
       - "9090:9090"
 
   node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
+    image: quay.io/prometheus/node-exporter:v1.8.2
     command:
       - '--path.rootfs=/host'
     volumes:
@@ -55,7 +55,7 @@ services:
       - "9100:9100"
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss:11.5.0
     ports:
       - "3001:3000"
     environment:

@@ -28,7 +28,7 @@ services:
 
   db:
     container_name: mysql
-    image: mysql:8.0-bookworm
+    image: mysql:9.2.0
     volumes:
       - .:/docker-entrypoint-initdb.d
       - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
@@ -45,7 +45,7 @@ services:
       - back-end
 
   adminer:
-    image: adminer
+    image: adminer:4.8.1-standalone
     restart: always
     ports:
       - 8080:8080
@@ -53,7 +53,7 @@ services:
       - back-end
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.1.0
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -64,7 +64,7 @@ services:
       - back-end
 
   node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
+    image: quay.io/prometheus/node-exporter:v1.8.2
     container_name: node_exporter
     command:
       - '--path.rootfs=/host'
@@ -81,7 +81,7 @@ services:
       - prometheus
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss:11.5.0
     container_name: grafana
     ports:
       - "3001:3000"
