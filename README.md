@@ -1,5 +1,3 @@
-[![codecov](https://codecov.io/gh/ARLJohnston/go-http/graph/badge.svg?token=LA0NE8ENYZ)](https://codecov.io/gh/ARLJohnston/go-http)
-
 # Example microservice application
 
 This repository is an example microservice architecture application
