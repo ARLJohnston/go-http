@@ -47,33 +47,6 @@ func TestCreateFailWhenNoDB(t *testing.T) {
 	}
 }
 
-func TestCreateFailWhenNoIdentifier(t *testing.T) {
-	mock, data, s := SetupMock(t)
-	defer data.Close()
-
-	mock.ExpectExec("INSERT INTO album").
-		WithArgs("Title", "Artist", 5, "Cover").
-		WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("mock error")))
-
-	album := proto.Album{Title: "Title", Artist: "Artist", Score: 5, Cover: "Cover"}
-
-	id, err := s.Create(context.Background(), &album)
-	if id != nil {
-		t.Errorf("Expected no id to be returned, got %d", id.Id)
-	}
-	if err == nil {
-		t.Errorf("Expected an err, got nil")
-	}
-
-	status, ok := status.FromError(err)
-	if !ok {
-		t.Errorf("Unable to convert error to status")
-	}
-	if status.Code() != codes.NotFound {
-		t.Errorf("Unexpected error returned: %v", err)
-	}
-}
-
 func TestReadFailNoDB(t *testing.T) {
 	mock, data, s := SetupMock(t)
 	defer data.Close()

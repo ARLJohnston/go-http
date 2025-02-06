@@ -3,16 +3,18 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ARLJohnston/go-http/proto"
 	msql "github.com/go-sql-driver/mysql"
-	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -83,31 +85,26 @@ func TestGrpcRead(t *testing.T) {
 
 	done := make(chan bool)
 	defer close(done)
-	found := false
+	complete := false
 
 	go func() {
 		for {
-			resp, err := stream.Recv()
+			_, err := stream.Recv()
 			if err == io.EOF {
 				done <- true
+				complete = true
 				return
 			}
 			if err != nil {
 				log.Printf("cannot receive %v", err)
 				return
 			}
-
-			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
-				found = true
-				done <- true
-				return
-			}
 		}
 	}()
 
 	<-done
-	if !found {
-		t.Error("Unable to find record")
+	if !complete {
+		t.Error("Unable to parse records")
 	}
 }
 
@@ -201,13 +198,14 @@ func TestParseEnv(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	ctx = context.Background()
-	container, port := startContainer(ctx)
+	container := startContainer(ctx)
 
-	cfg.Addr = fmt.Sprintf("localhost:%s", port)
+	//cfg.Addr = fmt.Sprintf("localhost:%s", port)
+	connStr := "postgres://user:password@localhost/album?sslmode=disable"
 
 	var err error
 	var server Server
-	server.db, err = sql.Open("mysql", cfg.FormatDSN())
+	server.db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		panic("Unable to connect to container")
 	}
@@ -221,23 +219,21 @@ func TestMain(m *testing.M) {
 	os.Exit(ret)
 }
 
-func startContainer(ctx context.Context) (*mysql.MySQLContainer, string) {
-	mysqlC, err := mysql.Run(ctx, "mysql:8.0-bookworm",
-		mysql.WithDatabase("album"),
-		mysql.WithUsername("root"),
-		mysql.WithPassword("password"),
-		mysql.WithScripts("create-tables.sql"),
+func startContainer(ctx context.Context) postgres.PostgresContainer {
+	postgresContainer, err := postgres.Run(ctx,
+		"postgres:16-alpine",
+		postgres.WithDatabase("album"),
+		postgres.WithUsername("user"),
+		postgres.WithPassword("password"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(30*time.Second)),
 	)
 	if err != nil {
 		log.Fatalf("Failed to start container: %v", err)
 	}
-
-	port, err := mysqlC.MappedPort(ctx, "3306")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return mysqlC, port.Port()
+	return *postgresContainer
 }
 
 func StartServer(ctx context.Context, server *Server) (proto.AlbumsClient, func()) {

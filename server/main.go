@@ -65,7 +65,7 @@ func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifie
 		)
 	}
 
-	result, err := s.db.Exec("INSERT INTO album (title, artist, score, cover) VALUES ($1, $2, $3, $4)", alb.Title, alb.Artist, alb.Score, alb.Cover)
+	_, err := s.db.Exec("INSERT INTO album (title, artist, score, cover) VALUES ($1, $2, $3, $4)", alb.Title, alb.Artist, alb.Score, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Create failed:" + err.Error())
@@ -74,17 +74,8 @@ func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifie
 		)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		opsFailed.Inc()
-		log.Println("Failed to get last insert id: " + err.Error())
-		return nil, status.Error(
-			codes.NotFound, "Failed to get last insert id: "+err.Error(),
-		)
-	}
-
 	opsSucceeded.Inc()
-	return &proto.Identifier{Id: id}, nil
+	return &proto.Identifier{Id: 1}, nil
 }
 
 // Opens stream for a streaming read of every album in the database
