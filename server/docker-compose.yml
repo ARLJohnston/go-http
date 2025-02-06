@@ -1,19 +1,25 @@
 services:
   db:
-    container_name: mysql-database
-    image: mysql:9.2.0
+    container_name: postgres-database
+    image: postgres:14.15-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: album
     volumes:
       - .:/docker-entrypoint-initdb.d
       - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
-    ports:
-      - "3306:3306/tcp"
-      - "33060:33060/tcp"
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_USER: dbuser
-      MYSQL_PASSWORD: userpass
-      MYSQL_DATABASE: album
-    restart: "unless-stopped"
+    # ports:
+    #   - "3306:3306/tcp"
+    #   - "33060:33060/tcp"
+    # environment:
+    #   MYSQL_ROOT_PASSWORD: password
+    #   MYSQL_USER: dbuser
+    #   MYSQL_PASSWORD: userpass
+    #   MYSQL_DATABASE: album
+    # restart: "unless-stopped"
 
   adminer:
     image: adminer

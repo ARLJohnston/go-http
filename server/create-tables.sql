@@ -1,11 +1,10 @@
 DROP TABLE IF EXISTS album;
 CREATE TABLE album (
-  id         INT AUTO_INCREMENT NOT NULL,
-  title      VARCHAR(128) NOT NULL,
-  artist     VARCHAR(255) NOT NULL,
-	score      INT NOT NULL,
-  cover      VARCHAR(512) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(128) NOT NULL,
+  artist VARCHAR(255) NOT NULL,
+  score INT NOT NULL,
+  cover VARCHAR(512) DEFAULT NULL
 );
 
 INSERT INTO album

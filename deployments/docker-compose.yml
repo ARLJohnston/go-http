@@ -3,7 +3,7 @@ services:
     container_name: front-end
     build: ../front
     ports:
-      - "3000:3000"
+      - "8000:3000"
     environment:
       GRPC_TARGET: client:50051
     networks:
@@ -17,6 +17,7 @@ services:
     ports:
       - "50051:50051"
     environment:
+      DATABASE_ADDRESS: db
       MYSQL_DATABASE_ADDRESS: db:3306
       MYSQL_USER: dbuser
       MYSQL_PASSWORD: userpass
@@ -27,19 +28,17 @@ services:
       - db
 
   db:
-    container_name: mysql
-    image: mysql:9.2.0
+    container_name: pgsql
+    image: postgres:14.15-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: album
     volumes:
       - .:/docker-entrypoint-initdb.d
       - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
-    ports:
-      - "3306:3306/tcp"
-      - "33060:33060/tcp"
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_USER: dbuser
-      MYSQL_PASSWORD: userpass
-      MYSQL_DATABASE: album
     restart: "unless-stopped"
     networks:
       - back-end

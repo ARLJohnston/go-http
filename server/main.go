@@ -1,4 +1,4 @@
-// Package main implements a gRPC server for interaction with a MYSQL database
+// Package main implements a gRPC server for interaction with a postgres database
 package main
 
 import (
@@ -15,7 +15,7 @@ import (
 
 	"database/sql"
 
-	"github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -65,7 +65,7 @@ func (s *Server) Create(ctx context.Context, alb *proto.Album) (*proto.Identifie
 		)
 	}
 
-	result, err := s.db.Exec("INSERT INTO album (title, artist, score, cover) VALUES (?, ?, ?, ?)", alb.Title, alb.Artist, alb.Score, alb.Cover)
+	result, err := s.db.Exec("INSERT INTO album (title, artist, score, cover) VALUES ($1, $2, $3, $4)", alb.Title, alb.Artist, alb.Score, alb.Cover)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Create failed:" + err.Error())
@@ -158,7 +158,7 @@ func (s *Server) Update(ctx context.Context, in *proto.UpdateRequest) (*proto.Ni
 		)
 	}
 
-	_, err := s.db.Exec("UPDATE album SET title=?, artist=?, score=?, cover=? WHERE id=?", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
+	_, err := s.db.Exec("UPDATE album SET title=$1, artist=$2, score=$3, cover=$4 WHERE id=$5", in.NewAlbum.Title, in.NewAlbum.Artist, in.NewAlbum.Score, in.NewAlbum.Cover, in.OldAlbum.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to update record: " + err.Error())
@@ -184,7 +184,7 @@ func (s *Server) Delete(ctx context.Context, alb *proto.Album) (*proto.Nil, erro
 		)
 	}
 
-	_, err := s.db.Exec("DELETE FROM album WHERE id=?", alb.Id)
+	_, err := s.db.Exec("DELETE FROM album WHERE id=$1", alb.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to delete record: " + err.Error())
@@ -209,7 +209,7 @@ func (s *Server) Increment(ctx context.Context, in *proto.Identifier) (*proto.Sc
 		)
 	}
 
-	_, err := s.db.Exec("UPDATE album SET score = score + 1 WHERE id=?", in.Id)
+	_, err := s.db.Exec("UPDATE album SET score = score + 1 WHERE id=$1", in.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to increment score: " + err.Error())
@@ -220,7 +220,7 @@ func (s *Server) Increment(ctx context.Context, in *proto.Identifier) (*proto.Sc
 	}
 
 	var score int
-	err = s.db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
+	err = s.db.QueryRow("SELECT score FROM album WHERE id=$1", in.Id).Scan(&score)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to retrieve score: " + err.Error())
@@ -245,7 +245,7 @@ func (s *Server) Decrement(ctx context.Context, in *proto.Identifier) (*proto.Sc
 		)
 	}
 
-	_, err := s.db.Exec("UPDATE album SET score = score - 1 WHERE id=?", in.Id)
+	_, err := s.db.Exec("UPDATE album SET score = score - 1 WHERE id=$1", in.Id)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to decrement score: " + err.Error())
@@ -256,7 +256,7 @@ func (s *Server) Decrement(ctx context.Context, in *proto.Identifier) (*proto.Sc
 	}
 
 	var score int
-	err = s.db.QueryRow("SELECT score FROM album WHERE id=?", in.Id).Scan(&score)
+	err = s.db.QueryRow("SELECT score FROM album WHERE id=$1", in.Id).Scan(&score)
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Unable to retrieve score: " + err.Error())
@@ -270,7 +270,7 @@ func (s *Server) Decrement(ctx context.Context, in *proto.Identifier) (*proto.Sc
 	return &proto.Score{Score: int64(score)}, nil
 }
 
-// Starts a gRPC server for MYSQL database management
+// Starts a gRPC server for database management
 func main() {
 	target := ParseEnv("TARGET_ADDRESS", ":50051")
 	listener, err := net.Listen("tcp", target)
@@ -285,24 +285,17 @@ func main() {
 	s := grpc.NewServer()
 	reflection.Register(s)
 
-	cfg := mysql.Config{
-		User:   ParseEnv("MYSQL_USER", "root"),
-		Passwd: ParseEnv("MYSQL_PASSWORD", "password"),
-		Net:    ParseEnv("MYSQL_NETWORK_PROTOCOL", "tcp"),
-		Addr:   ParseEnv("MYSQL_DATABASE_ADDRESS", "localhost:3306"),
-		DBName: ParseEnv("MYSQL_DATABASE_NAME", "album"),
-	}
-
 	var server Server
 
-	server.db, err = sql.Open("mysql", cfg.FormatDSN())
+	host := ParseEnv("DATABASE_ADDRESS", "localhost")
+	connStr := "postgres://user:password@" + host + "/album?sslmode=disable"
+	server.db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalln("Failed to connect to database", err)
 	}
-
 	defer server.db.Close()
 
-	proto.RegisterAlbumsServer(s, &Server{})
+	proto.RegisterAlbumsServer(s, &server)
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalln("Failed to serve gRPC Server", err)

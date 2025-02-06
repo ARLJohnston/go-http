@@ -6,6 +6,7 @@ require (
 	github.com/ARLJohnston/go-http/proto v0.0.0-20241219142827-ba2fc699a44f
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-sql-driver/mysql v1.8.1
+	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.20.5
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.33.0
 	google.golang.org/grpc v1.68.1
