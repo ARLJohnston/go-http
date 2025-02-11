@@ -9,17 +9,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: album
     volumes:
-      - .:/docker-entrypoint-initdb.d
-      - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
-    # ports:
-    #   - "3306:3306/tcp"
-    #   - "33060:33060/tcp"
-    # environment:
-    #   MYSQL_ROOT_PASSWORD: password
-    #   MYSQL_USER: dbuser
-    #   MYSQL_PASSWORD: userpass
-    #   MYSQL_DATABASE: album
-    # restart: "unless-stopped"
+      - ./create-tables.sql:/docker-entrypoint-initdb.d/init.sql
 
   adminer:
     image: adminer

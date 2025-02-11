@@ -42,6 +42,10 @@ var (
 		Name: "front_end_database_loads_total",
 		Help: "The total number of database loads from the front end",
 	})
+	requestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_request_duration_seconds",
+		Help: "Duration of HTTP requests",
+	}, []string{"path"})
 )
 
 func parseEnv(key, fallback string) string {
@@ -55,6 +59,9 @@ func parseEnv(key, fallback string) string {
 // Reads from the database via gRPC and populates the template with streaming
 func handleLoad(w http.ResponseWriter, r *http.Request) {
 	pageLoads.Inc()
+	timer := prometheus.NewTimer(requestDuration.WithLabelValues("/"))
+	defer timer.ObserveDuration()
+
 	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		component := unavailable(err.Error())
@@ -154,6 +161,6 @@ func main() {
 	http.HandleFunc("/", handleLoad)
 	http.HandleFunc("/post", post)
 
-	fmt.Println("Listening on : 3000")
+	fmt.Println("Listening on :3000")
 	http.ListenAndServe(":3000", nil)
 }

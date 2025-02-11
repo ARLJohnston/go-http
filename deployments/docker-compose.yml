@@ -16,11 +16,12 @@ services:
     build: ../server
     ports:
       - "50051:50051"
+      - "2121:2121"
     environment:
       DATABASE_ADDRESS: db
-      MYSQL_DATABASE_ADDRESS: db:3306
-      MYSQL_USER: dbuser
-      MYSQL_PASSWORD: userpass
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: album
     networks:
       - front-end
       - back-end
@@ -37,60 +38,10 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: album
     volumes:
-      - .:/docker-entrypoint-initdb.d
-      - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
+      - ./create-tables.sql:/docker-entrypoint-initdb.d/init.sql
     restart: "unless-stopped"
     networks:
       - back-end
-
-  adminer:
-    image: adminer:4.8.1-standalone
-    restart: always
-    ports:
-      - 8080:8080
-    networks:
-      - back-end
-
-  prometheus:
-    image: prom/prometheus:v3.1.0
-    container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - front-end
-      - back-end
-
-  node_exporter:
-    image: quay.io/prometheus/node-exporter:v1.8.2
-    container_name: node_exporter
-    command:
-      - '--path.rootfs=/host'
-    pid: host
-    restart: unless-stopped
-    volumes:
-      - '/:/host:ro,rslave'
-    ports:
-      - "9100:9100"
-    networks:
-      - front-end
-      - back-end
-    depends_on:
-      - prometheus
-
-  grafana:
-    image: grafana/grafana-oss:11.5.0
-    container_name: grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    networks:
-      - front-end
-      - back-end
-    depends_on:
-      - prometheus
 
 networks:
   front-end:

@@ -37,6 +37,10 @@ var (
 		Name: "database_client_successful_ops_total",
 		Help: "The total number of successful database calls by the gRPC client",
 	})
+	powerUsage = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "estimated_power_usage_W",
+		Help: "Estimated power usage for a Pi3B running this application",
+	})
 )
 
 // Returns value of environment variable if it is set, otherwise returns fallback
@@ -269,6 +273,7 @@ func main() {
 		log.Fatalln("Failed to create tcp listener", err)
 	}
 	defer listener.Close()
+	// https://dev.to/metonymicsmokey/custom-prometheus-metrics-with-go-520n
 
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(":2121", nil)
