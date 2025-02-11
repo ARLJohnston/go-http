@@ -1,18 +1,13 @@
 # Scripts
-## Load testing with k6
+## Load testing with Locust
 Requires [xk6](https://github.com/grafana/xk6) and [xk6 faker](https://github.com/grafana/xk6-faker)
 
+Requirements for the Locust load testing can be installed using
 ```console
-go install go.k6.io/xk6/cmd/xk6@latest # Install xk6 into GOPATH
-
-$GOPATH/bin/xk6 build --with github.com/grafana/xk6-faker@latest # Patch xk6 to have faker, creates k6 binary in current directory
-
-./k6 run --no-usage-report script.js
+pip install -r requirements.txt
 ```
 
-To configure number of virtual users and run duration:
-```console
-./k6 run --no-usage-report --duration <Duration> --vus <Num VUs> script.js
-```
+Then the locustfile can be run using either the Locust web GUI or the headless CLI
 
-This will load test the locally-hosted application
+Results should look similar to the following:
+![Image of locust web GUI dashboard](locust_run.png)
