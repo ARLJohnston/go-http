@@ -33,5 +33,7 @@
 !prometheus/*.yml
 !proto/*.proto
 
+!*.py
+
 # ...even if they are in subdirectories
 !*/
