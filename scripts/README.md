@@ -1,7 +1,5 @@
 # Scripts
 ## Load testing with Locust
-Requires [xk6](https://github.com/grafana/xk6) and [xk6 faker](https://github.com/grafana/xk6-faker)
-
 Requirements for the Locust load testing can be installed using
 ```console
 pip install -r requirements.txt

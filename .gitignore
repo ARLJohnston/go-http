@@ -15,7 +15,7 @@
 !*.sql
 !*.templ
 !*.js
-!demo.png
+!*.png
 
 !README.md
 !LICENSE
