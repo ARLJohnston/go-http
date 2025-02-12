@@ -2,63 +2,62 @@ services:
   front-end:
     image: ghcr.io/arljohnston/go-microservice-front:latest
     ports:
-      - "3000:3000"
+      - 3000:3000
     environment:
       GRPC_TARGET: client:50051
     depends_on:
       - client
+    networks:
+      - host
+      - internal
 
   client:
     image: ghcr.io/arljohnston/go-microservice-server:latest
     ports:
-      - "50051:50051"
+      - 50051:50051
+      - 2121:2121
     environment:
-      MYSQL_DATABASE_ADDRESS: db:3306
-      MYSQL_USER: dbuser
-      MYSQL_PASSWORD: userpass
+      DATABASE_ADDRESS: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: album
     depends_on:
       - db
+    networks:
+      - host
+      - internal
 
   db:
-    image: mysql:9.2.0
-    volumes:
-      - .:/docker-entrypoint-initdb.d
-      - ./create-tables.sql:/docker-entrypoint-initdb.d/dump.sql
+    image: postgres:14-alpine3.20
     ports:
-      - "3306:3306/tcp"
-      - "33060:33060/tcp"
+      - 5432:5432
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_USER: dbuser
-      MYSQL_PASSWORD: userpass
-      MYSQL_DATABASE: album
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: album
+    configs:
+      - source: db_init_sql
+        target: /docker-entrypoint-initdb.d/init.sql
+    networks:
+      - host
+      - internal
 
   adminer:
     image: adminer:4.8.1-standalone
     ports:
       - 8080:8080
+    networks:
+      - host
+      - internal
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
+networks:
+  host:
+    name: host
+    external: true
+  internal:
+    driver: overlay
 
-  node_exporter:
-    image: quay.io/prometheus/node-exporter:v1.8.2
-    command:
-      - '--path.rootfs=/host'
-    volumes:
-      - '/:/host:ro,rslave'
-    ports:
-      - "9100:9100"
 
-  grafana:
-    image: grafana/grafana-oss:11.5.0
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    depends_on:
-      - prometheus
+configs:
+  db_init_sql:
+    file: ./create-tables.sql
