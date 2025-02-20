@@ -46,11 +46,13 @@ class APIUser(grpc_user.GrpcUser):
             pass
 
 
-class NormalUser(HttpUser):
+class NormalUser(FastHttpUser):
     """Simulation of user using http to access page and vote on posts"""
 
     host = "http://" + host_addr + ":3000"
     wait_time = between(1, 5)
+    network_timeout = 3.0
+    connection_timeout = 3.0
 
     @task
     def get_front_end(self):
