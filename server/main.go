@@ -273,7 +273,6 @@ func main() {
 		log.Fatalln("Failed to create tcp listener", err)
 	}
 	defer listener.Close()
-	// https://dev.to/metonymicsmokey/custom-prometheus-metrics-with-go-520n
 
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(":2121", nil)

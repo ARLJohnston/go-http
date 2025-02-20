@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ARLJohnston/go-http/proto"
-	msql "github.com/go-sql-driver/mysql"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -23,12 +22,6 @@ import (
 var (
 	client proto.AlbumsClient
 	ctx    context.Context
-	cfg    msql.Config = msql.Config{
-		User:   "root",
-		Passwd: "password",
-		Net:    "tcp",
-		DBName: "album",
-	}
 )
 
 func TestGrpcCreate(t *testing.T) {
@@ -85,26 +78,31 @@ func TestGrpcRead(t *testing.T) {
 
 	done := make(chan bool)
 	defer close(done)
-	complete := false
+	found := false
 
 	go func() {
 		for {
-			_, err := stream.Recv()
+			resp, err := stream.Recv()
 			if err == io.EOF {
 				done <- true
-				complete = true
 				return
 			}
 			if err != nil {
 				log.Printf("cannot receive %v", err)
 				return
 			}
+
+			if resp.Title == "Blue Train" && resp.Artist == "John Coltrane" {
+				found = true
+				done <- true
+				return
+			}
 		}
 	}()
 
 	<-done
-	if !complete {
-		t.Error("Unable to parse records")
+	if !found {
+		t.Error("Unable to find record")
 	}
 }
 
@@ -199,11 +197,11 @@ func TestParseEnv(t *testing.T) {
 func TestMain(m *testing.M) {
 	ctx = context.Background()
 	container := startContainer(ctx)
+	connStr, err := container.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		panic("Unable to create connection string")
+	}
 
-	//cfg.Addr = fmt.Sprintf("localhost:%s", port)
-	connStr := "postgres://user:password@localhost/album?sslmode=disable"
-
-	var err error
 	var server Server
 	server.db, err = sql.Open("postgres", connStr)
 	if err != nil {
@@ -225,6 +223,8 @@ func startContainer(ctx context.Context) postgres.PostgresContainer {
 		postgres.WithDatabase("album"),
 		postgres.WithUsername("user"),
 		postgres.WithPassword("password"),
+		postgres.WithDatabase("album"),
+		postgres.WithInitScripts("create-tables.sql"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).
