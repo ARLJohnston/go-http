@@ -2,7 +2,7 @@
 
 This repository is an example microservice architecture application
 
-[![](https://mermaid.ink/img/pako:eNpdUctugzAQ_JWVz4l66wFVlSABIjVt0ySnQg8LmGAVbMuYtlGSf68f5NGemJ0Z74zNgZSioiQgULfiu2xQaViucw79UOwUygZCKVtWomaCGxqgYoqWdvI-gDBLlOB6GvMKUnG3pZ1sP5wSZRGWn6PgqVk2R40F9hSe95u3pWH9EniYTh-Pu_VqdoTIn3YUzEaH-1Be3XbbKqxrVjr9tlm0HSmAefZ0D3YtaG_-uEixlRqt5R_JR5iDYNN9ldjh0De5pL8WPVVfWLCW6b1V_j9Nkq2U6Khu6NC73Yvsxbw2xD9SKE2V49IsNenI0U4-IXRxiYXRFSYOpt6yuPKLc7kzjMZrkAnpqOqQVeb_HiyZE9OlozkJDKxojUOrc5Lzk7HioMVmz0sSaDXQCVFi2DUkqLHtzTTICjWdMzRX784WifxdiG40nX4BlhS4Rg?type=png)](https://mermaid.live/edit#pako:eNpdUctugzAQ_JWVz4l66wFVlSABIjVt0ySnQg8LmGAVbMuYtlGSf68f5NGemJ0Z74zNgZSioiQgULfiu2xQaViucw79UOwUygZCKVtWomaCGxqgYoqWdvI-gDBLlOB6GvMKUnG3pZ1sP5wSZRGWn6PgqVk2R40F9hSe95u3pWH9EniYTh-Pu_VqdoTIn3YUzEaH-1Be3XbbKqxrVjr9tlm0HSmAefZ0D3YtaG_-uEixlRqt5R_JR5iDYNN9ldjh0De5pL8WPVVfWLCW6b1V_j9Nkq2U6Khu6NC73Yvsxbw2xD9SKE2V49IsNenI0U4-IXRxiYXRFSYOpt6yuPKLc7kzjMZrkAnpqOqQVeb_HiyZE9OlozkJDKxojUOrc5Lzk7HioMVmz0sSaDXQCVFi2DUkqLHtzTTICjWdMzRX784WifxdiG40nX4BlhS4Rg)
+[![](https://mermaid.ink/img/pako:eNpdUstuwjAQ_JWVz0S9o6oS4REOtCDKqQmHxXESq4ltOZu2CPj3OnZ4tCfPzox3x48T4zoXbMygqPU3r9ASrLaZgrY7lBZNBRNjasmRpFaOBsilFbyvgg9gki6sVhTNVQ6JftqJxtR7r8RpjPxzEAI1TWdIeMBWwEa3VFrROiH0gecoejmX2830DHFo4CmYDg6_CJU_xttZLArJvf4YLt4NFMAsXWnetQR9a6CwYX-T51e5IjJ_5DDKNYA-RYg093gSEt1SrA-tsF94kLWkY7Q2fQSse8v_61qkG6sbQZXoWj9kmb65F4D5j9GWhPVckiYuBirsqzBq4ucuehjf4cLDJFiWd355TXmF8XAeNmKNsA3K3L35qScz5rI0ImNjB3NRYFdTxjJ1cVbsSL8fFWdjsp0YMau7smLjAuvWVZ3JkcRMoruD5sYaVB9a32uRS9L2Nfwy_9kuv2BsyCw?type=png)](https://mermaid.live/edit#pako:eNpdUstuwjAQ_JWVz0S9o6oS4REOtCDKqQmHxXESq4ltOZu2CPj3OnZ4tCfPzox3x48T4zoXbMygqPU3r9ASrLaZgrY7lBZNBRNjasmRpFaOBsilFbyvgg9gki6sVhTNVQ6JftqJxtR7r8RpjPxzEAI1TWdIeMBWwEa3VFrROiH0gecoejmX2830DHFo4CmYDg6_CJU_xttZLArJvf4YLt4NFMAsXWnetQR9a6CwYX-T51e5IjJ_5DDKNYA-RYg093gSEt1SrA-tsF94kLWkY7Q2fQSse8v_61qkG6sbQZXoWj9kmb65F4D5j9GWhPVckiYuBirsqzBq4ucuehjf4cLDJFiWd355TXmF8XAeNmKNsA3K3L35qScz5rI0ImNjB3NRYFdTxjJ1cVbsSL8fFWdjsp0YMau7smLjAuvWVZ3JkcRMoruD5sYaVB9a32uRS9L2Nfwy_9kuv2BsyCw)
 
 ![Image of application](demo.png)
 
@@ -16,7 +16,7 @@ This will enter an environment with all the packages listed in the mkShell in  t
 # Deployment
 ## Individual services
 ### Database
-Start a MySQL database on port 3306, and run the [sql migration script](./server/create-tables.sql)
+Start a Postgres database on port 5432, and run the [sql migration script](./server/create-tables.sql)
 
 This can be done with Docker as follows:
 ```console
@@ -30,7 +30,7 @@ docker compose down -v
 ```
 
 ### Database Client
-Requires a running MySQL database, which is set with `MYSQL_DATABASE_ADDRESS` and defaults to `localhost:3306`
+Requires a running Postgres database, which is set with `DATABASE_ADDRESS` and defaults to `localhost:5432`
 Use Go to build and run the client:
 ```console
 cd server
@@ -49,4 +49,4 @@ go run .
 This will start a http server on port :3000
 
 ## All-in-one
-Deployment scripts are in the [deployments directory](./deployments/) and contains instructions on running the application with: [Docker Compose](https://docs.docker.com/compose/), [Docker Swarm](https://docs.docker.com/engine/swarm/) and [Kubernetes](https://kubernetes.io/) (with and without service mesh frameworks).
+Deployment scripts are in the [deployments directory](./deployments/) and contains instructions on running the application with: [Docker Compose](https://docs.docker.com/compose/), [Docker Swarm](https://docs.docker.com/engine/swarm/) and [Kubernetes](https://kubernetes.io/).

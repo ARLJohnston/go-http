@@ -1,7 +1,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ARLJohnston/go-http/server)](https://goreportcard.com/report/github.com/ARLJohnston/go-http/server)
 
 # Running the client
-Requires a running MySQL database, which is set with `MYSQL_DATABASE_ADDRESS` and defaults to `localhost:3306`
+Requires a running Postgres database, which is set with `DATABASE_ADDRESS` and defaults to `localhost:5432`
 
 Use Go to build and run the client:
 ```console

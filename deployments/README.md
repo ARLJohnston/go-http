@@ -26,35 +26,9 @@ docker stack rm <NAME>
 
 Note that these may require root, if Docker has not been setup for rootless access.
 
-## Kubernetes (via Helm)
-To install dependencies:
+# Kubernetes
+To deploy the application to a running cluster
 ```console
-helmfile init
-```
-
-To sync Kubernetes to the desired state:
-```console
-helmfile apply -f kubernetes.yaml
-```
-
-To [remove](https://helmfile.readthedocs.io/en/latest/#destroy) the deployment from the cluster:
-```console
-helmfile destroy
-```
-
-
-## Service mesh (via Helm)
-To install dependencies:
-```console
-helmfile init
-```
-
-To sync the service mesh to the desired state:
-```console
-helmfile apply -f servicemesh.yaml
-```
-
-To [remove](https://helmfile.readthedocs.io/en/latest/#destroy) the deployment from the cluster:
-```console
-helmfile destroy
+cd kompose
+kubectl apply -f .
 ```
