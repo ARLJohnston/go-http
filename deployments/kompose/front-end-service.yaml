@@ -12,5 +12,6 @@ spec:
     - name: "8000"
       port: 8000
       targetPort: 3000
+  type: LoadBalancer
   selector:
     io.kompose.service: front-end

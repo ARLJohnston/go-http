@@ -15,5 +15,6 @@ spec:
     - name: "2121"
       port: 2121
       targetPort: 2121
+  type: LoadBalancer
   selector:
     io.kompose.service: client
