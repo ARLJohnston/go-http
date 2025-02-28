@@ -103,8 +103,11 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 			"Failed to select: "+err.Error(),
 		)
 	}
+	defer rows.Close()
 
-	for rows.Next() {
+	var count uint
+
+	for rows.Next() || count > 50 {
 		var alb proto.Album
 		err = rows.Scan(&alb.Id, &alb.Title, &alb.Artist, &alb.Score, &alb.Cover)
 
@@ -125,6 +128,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 				"Failed to send row: "+err.Error(),
 			)
 		}
+		count++
 	}
 
 	err = rows.Err()
