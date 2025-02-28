@@ -1,7 +1,7 @@
 import time
 import random
 import queue
-from locust import HttpUser, task, between, events
+from locust import FastHttpUser, task, between, events
 import grpc
 import grpc_user
 import album_pb2
@@ -12,7 +12,13 @@ Faker.seed(4321)
 fake = Faker()
 random.seed(8765)
 
-host_addr = "192.168.12.82"
+
+@events.init_command_line_parser.add_listener
+def _(parser):
+    parser.add_argument(
+        "--host-addr", type=str, default="localhost", help="Ip address of the cluster"
+    )
+
 
 created_albums = queue.Queue()
 
@@ -20,9 +26,12 @@ created_albums = queue.Queue()
 class APIUser(grpc_user.GrpcUser):
     """Simulation of user using a developer API to directly call gRPC methods"""
 
-    host = host_addr + ":50051"
     stub_class = album_pb2_grpc.AlbumsStub
     offset = 6
+
+    @property
+    def host(self):
+        return environment.parsed_options.host_addr + ":50051"
 
     @task
     def create(self):
@@ -49,10 +58,13 @@ class APIUser(grpc_user.GrpcUser):
 class NormalUser(FastHttpUser):
     """Simulation of user using http to access page and vote on posts"""
 
-    host = "http://" + host_addr + ":3000"
     wait_time = between(1, 5)
     network_timeout = 3.0
     connection_timeout = 3.0
+
+    @property
+    def host(self):
+        return "http://" + self.environment.parsed_options.host_addr + ":8000"
 
     @task
     def get_front_end(self):
