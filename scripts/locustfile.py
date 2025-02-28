@@ -16,7 +16,7 @@ random.seed(8765)
 @events.init_command_line_parser.add_listener
 def _(parser):
     parser.add_argument(
-        "--host-addr", type=str, default="localhost", help="Ip address of the cluster"
+        "--host-addr", type=str, default="localhost", help="IP address of the cluster"
     )
 
 
@@ -31,7 +31,7 @@ class APIUser(grpc_user.GrpcUser):
 
     @property
     def host(self):
-        return environment.parsed_options.host_addr + ":50051"
+        return self.environment.parsed_options.host_addr + ":50051"
 
     @task
     def create(self):
@@ -85,7 +85,7 @@ def on_test_stop(environment, **kwargs):
     """Cleanup all created albums after the test finishes."""
 
     print("Cleaning up all created albums...")
-    with grpc.insecure_channel(host_addr + ":50051") as channel:
+    with grpc.insecure_channel(environment.parsed_options.host_addr + ":50051") as channel:
         stub = album_pb2_grpc.AlbumsStub(channel)
         while not created_albums.empty():
             album_id = created_albums.get(block=False)
