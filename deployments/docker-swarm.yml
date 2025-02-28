@@ -2,7 +2,7 @@ services:
   front-end:
     image: ghcr.io/arljohnston/go-microservice-front:latest
     ports:
-      - 3000:3000
+      - 8000:3000
     environment:
       GRPC_TARGET: client:50051
     depends_on:
@@ -38,14 +38,6 @@ services:
     configs:
       - source: db_init_sql
         target: /docker-entrypoint-initdb.d/init.sql
-    networks:
-      - host
-      - internal
-
-  adminer:
-    image: adminer:4.8.1-standalone
-    ports:
-      - 8080:8080
     networks:
       - host
       - internal
