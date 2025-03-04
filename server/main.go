@@ -107,7 +107,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 
 	var count uint
 
-	for rows.Next() || count > 50 {
+	for rows.Next() && count <= 16 {
 		var alb proto.Album
 		err = rows.Scan(&alb.Id, &alb.Title, &alb.Artist, &alb.Score, &alb.Cover)
 

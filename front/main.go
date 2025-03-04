@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/a-h/templ"
 
@@ -61,6 +62,9 @@ func handleLoad(w http.ResponseWriter, r *http.Request) {
 	pageLoads.Inc()
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("/"))
 	defer timer.ObserveDuration()
+
+	_, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
