@@ -25,7 +25,6 @@ created_albums = queue.Queue()
 
 class APIUser(grpc_user.GrpcUser):
     """Simulation of user using a developer API to directly call gRPC methods"""
-
     stub_class = album_pb2_grpc.AlbumsStub
     offset = 6
 
@@ -57,8 +56,6 @@ class APIUser(grpc_user.GrpcUser):
 
 class NormalUser(FastHttpUser):
     """Simulation of user using http to access page and vote on posts"""
-
-    wait_time = between(1, 5)
     network_timeout = 3.0
     connection_timeout = 3.0
 
