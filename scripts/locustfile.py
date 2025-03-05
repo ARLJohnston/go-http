@@ -20,7 +20,7 @@ def _(parser):
     )
 
 
-created_albums = queue.Queue()
+created_albums = queue.Queue(maxsize=50)
 
 
 class APIUser(grpc_user.GrpcUser):

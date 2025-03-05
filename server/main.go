@@ -290,9 +290,13 @@ func main() {
 	connStr := "postgres://user:password@" + host + "/album?sslmode=disable"
 	server.db, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatalln("Failed to connect to database", err)
+		log.Fatalln("Failed to connect to database: ", err)
 	}
 	defer server.db.Close()
+
+	if err := server.db.Ping(); err != nil {
+		log.Fatalln("Unable to ping database: ", err)
+	}
 
 	proto.RegisterAlbumsServer(s, &server)
 	err = s.Serve(listener)
