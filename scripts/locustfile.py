@@ -34,24 +34,38 @@ class APIUser(grpc_user.GrpcUser):
 
     @task
     def create(self):
-        album = album_pb2.Album(
-            id=self.offset,
-            title=fake.bs(),
-            artist=fake.name(),
-            score=random.randint(-50, 50),
-            cover=fake.image_url(),
-        )
-        self.stub.Create(album)
-        created_albums.put(self.offset)
-        self.offset += 1
+        if queue.full():
+            return
+
+        try:
+            album = album_pb2.Album(
+                id=self.offset,
+                title=fake.bs(),
+                artist=fake.name(),
+                score=random.randint(-50, 50),
+                cover=fake.image_url(),
+            )
+            self.stub.Create(album)
+            created_albums.put(self.offset, timeout=3)
+            self.offset += 1
+
+        except queue.Full:
+            self.stub.Delete(album_pb2.Identifier(id=self.offset))
+            return
+
+        except grpc.RpcError:
+            return
 
     @task
     def delete(self):
+        album = -1
         try:
-            album = created_albums.get(block=False)
+            album = created_albums.get(timeout=3)
             self.stub.Delete(album_pb2.Identifier(id=album))
+        except grpc.RpcError:
+            created_albums.put(album)
         except queue.Empty:
-            pass
+            return
 
 
 class NormalUser(FastHttpUser):
