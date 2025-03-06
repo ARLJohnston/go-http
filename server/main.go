@@ -293,6 +293,8 @@ func main() {
 		log.Fatalln("Failed to connect to database: ", err)
 	}
 	defer server.db.Close()
+	server.db.SetMaxOpenConns(10)
+	server.db.SetMaxIdleConns(5)
 
 	if err := server.db.Ping(); err != nil {
 		log.Fatalln("Unable to ping database: ", err)
