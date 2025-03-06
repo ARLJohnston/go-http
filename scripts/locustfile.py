@@ -22,7 +22,7 @@ def _(parser):
 class APIUser(grpc_user.GrpcUser):
     """Simulation of user using a developer API to directly call gRPC methods"""
     stub_class = album_pb2_grpc.AlbumsStub
-    offset = 6
+    offset = 0
 
     @property
     def host(self):
@@ -31,7 +31,7 @@ class APIUser(grpc_user.GrpcUser):
     @task
     def createDelete(self):
         album = album_pb2.Album(
-            id=self.offset,
+            id=6+self.offset,
             title=fake.bs(),
             artist=fake.name(),
             score=random.randint(-50, 50),
@@ -39,6 +39,7 @@ class APIUser(grpc_user.GrpcUser):
         )
         self.stub.Create(album)
         self.offset += 1
+        self.offset %=5
         self.stub.Delete(album_pb2.Identifier(id=album.id))
 
 
