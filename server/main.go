@@ -94,7 +94,7 @@ func (s *Server) Read(_ *proto.Nil, stream proto.Albums_ReadServer) error {
 		)
 	}
 
-	rows, err := s.db.Query("SELECT * FROM album")
+	rows, err := s.db.Query("SELECT * FROM album FETCH FIRST 16 ROWS ONLY")
 	if err != nil {
 		opsFailed.Inc()
 		log.Println("Failed to select: " + err.Error())
