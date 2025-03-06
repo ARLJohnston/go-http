@@ -39,8 +39,7 @@ class APIUser(grpc_user.GrpcUser):
         )
         self.stub.Create(album)
         self.offset += 1
-
-        self.stub.Delete(album_pb2.Identifier(id=album))
+        self.stub.Delete(album_pb2.Identifier(id=album.id))
 
 
 class NormalUser(FastHttpUser):
