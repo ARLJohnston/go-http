@@ -34,9 +34,6 @@ class APIUser(grpc_user.GrpcUser):
 
     @task
     def create(self):
-        if queue.full():
-            return
-
         try:
             album = album_pb2.Album(
                 id=self.offset,
@@ -72,6 +69,9 @@ class NormalUser(FastHttpUser):
     """Simulation of user using http to access page and vote on posts"""
     network_timeout = 3.0
     connection_timeout = 3.0
+    header = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
 
     @property
     def host(self):
@@ -79,11 +79,11 @@ class NormalUser(FastHttpUser):
 
     @task
     def get_front_end(self):
-        self.client.get("/")
+        self.client.get("/", header=self.header)
 
     @task
     def get_metrics(self):
-        self.client.get("/metrics")
+        self.client.get("/metrics", header=self.header)
 
     @task
     def vote(self):
