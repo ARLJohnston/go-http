@@ -18,6 +18,5 @@ jobs:
           fetch-depth: 1
 
       - name: "Validate"
+        working-directory: deployments/kompose
         uses: instrumenta/kubeval-action@master
-        with:
-          path: deployments/kompose
