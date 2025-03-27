@@ -10,6 +10,9 @@ services:
     networks:
       - host
       - internal
+    deploy:
+      placement:
+        constraints: [ node.role==worker ]
 
   client:
     image: ghcr.io/arljohnston/go-microservice-server:latest
@@ -26,6 +29,9 @@ services:
     networks:
       - host
       - internal
+    deploy:
+      placement:
+        constraints: [ node.role==worker ]
 
   db:
     image: postgres:14-alpine3.20
@@ -41,6 +47,9 @@ services:
     networks:
       - host
       - internal
+    deploy:
+      placement:
+        constraints: [ node.role==worker ]
 
 networks:
   host:
