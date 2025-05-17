@@ -6,7 +6,7 @@ click==8.1.8
 ConfigArgParse==1.7
 Faker==36.1.0
 Flask==3.1.0
-Flask-Cors==5.0.0
+Flask-Cors==6.0.0
 Flask-Login==0.6.3
 gevent==24.11.1
 geventhttpclient==2.3.3
